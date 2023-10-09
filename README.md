@@ -15,11 +15,10 @@ Great for scheduling recurring events, such as:
 
 ## Getting started
 
-As a Dart-only package, all you need to do is install the most recent version to your dependencies:
+Install the most recent version to your app's dependencies:
 
-```yaml
-dependencies:
-  schedules: ^0.0.1
+```
+dart pub add schedules
 ```
 
 ## Usage
@@ -59,7 +58,7 @@ Repeats every _n_ weeks on the specified weekdays.
 final weekly = Weekly(
   startDate: DateTime(2023, 01, 01),
   frequency: 2,
-  days: [DateTime.monday, DateTime.thursday],
+  weekdays: [DateTime.monday, DateTime.thursday],
 );
 ```
 
