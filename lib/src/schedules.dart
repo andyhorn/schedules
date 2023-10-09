@@ -26,8 +26,8 @@ sealed class Schedule {
 
 class Singular extends Schedule {
   const Singular({
-    required super.startDate,
-  });
+    required DateTime date,
+  }) : super(startDate: date);
 
   @override
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);

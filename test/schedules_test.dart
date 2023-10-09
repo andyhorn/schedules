@@ -6,12 +6,12 @@ void main() {
     group(Singular, () {
       group('#occursOn', () {
         test('is true on the correct date', () {
-          final schedule = Singular(startDate: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023, 01, 01));
           expect(schedule.occursOn(DateTime(2023, 01, 01)), isTrue);
         });
 
         test('is false for incorrect date', () {
-          final schedule = Singular(startDate: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023, 01, 01));
           expect(schedule.occursOn(DateTime(2023, 01, 02)), isFalse);
         });
       });
