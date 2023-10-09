@@ -1,3 +1,7 @@
+## 0.0.2
+
+- Fix typos and grammar in README
+
 ## 0.0.1 - Initial Version (2023-10-08)
 
 - Schedule sealed base class with subclasses for different schedule types:
