@@ -12,7 +12,6 @@ Great for scheduling recurring events, such as:
   * Birthdays
   * Anniversaries
   * Holidays
-  * Etc.
 
 ## Getting started
 
@@ -29,6 +28,8 @@ Use one of the Schedule classes to represent a recurring event:
 
 #### Singular (one-time event)
 
+An event that occurs only once.
+
 ```dart
 // One time on January 1, 2023
 final singular = Singular(
@@ -38,7 +39,7 @@ final singular = Singular(
 
 #### Daily
 
-Repeats every _n_ days
+Repeats every _n_ days.
 
 ```dart
 // Every other day, beginning on January 1, 2023.
