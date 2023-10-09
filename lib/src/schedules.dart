@@ -1,14 +1,27 @@
 import 'package:schedules/src/extensions.dart';
 
+/// A schedule represents a set of dates that an event occurs on.
+/// This is used to determine if an event occurs on a given date.
+///
+/// For example, a schedule could represent an event that occurs every Monday and Wednesday.
+/// Or, a schedule could represent an event that occurs every 2 months on the 10th.
 sealed class Schedule {
   const Schedule({
     required this.startDate,
     this.endDate,
   });
 
+  /// The date that this schedule begins on.
+  ///
+  /// Note that this is not necessarily the first date that this schedule occurs.
   final DateTime startDate;
+
+  /// The date that this schedule ends on.
+  ///
+  /// If this is `null`, then this schedule has no end date.
   final DateTime? endDate;
 
+  /// Determine if this schedule includes the given [date].
   bool occursOn(DateTime date);
 
   bool _isWithinBounds(DateTime date) {
@@ -24,8 +37,10 @@ sealed class Schedule {
   }
 }
 
+/// Represents a schedule that occurs only once.
 class Singular extends Schedule {
   const Singular({
+    // renamed to be more explicit that this is a single date
     required DateTime date,
   }) : super(startDate: date);
 
@@ -33,13 +48,17 @@ class Singular extends Schedule {
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);
 }
 
+/// Represents a schedule that occurs every _n_ days.
 class Daily extends Schedule {
   const Daily({
     required super.startDate,
-    super.endDate,
     required this.frequency,
+    super.endDate,
   });
 
+  /// The frequency at which this schedule occurs.
+  ///
+  /// For example, if this is `2`, then this schedule occurs every other day.
   final int frequency;
 
   @override
@@ -53,15 +72,25 @@ class Daily extends Schedule {
   }
 }
 
+/// Represents a schedule that occurs every _n_ weeks on the given [weekdays].
 class Weekly extends Schedule {
   const Weekly({
     required super.startDate,
-    super.endDate,
     required this.frequency,
     required this.weekdays,
+    super.endDate,
   });
 
+  /// The frequency at which this schedule occurs.
+  ///
+  /// For example, if this is `2`, then this schedule occurs every other week.
   final int frequency;
+
+  /// The weekdays that this schedule occurs on.
+  ///
+  /// This is a list of integers, where each integer represents a weekday.
+  ///
+  /// For example, if this is `[DateTime.monday, DateTime.wednesday]`, then this schedule occurs on Mondays and Wednesdays.
   final List<int> weekdays;
 
   @override
@@ -76,6 +105,7 @@ class Weekly extends Schedule {
   }
 }
 
+/// Represents a schedule that occurs every _n_ months on the given [days].
 class Monthly extends Schedule {
   const Monthly({
     required super.startDate,
@@ -84,7 +114,16 @@ class Monthly extends Schedule {
     required this.frequency,
   });
 
+  /// The days of the month that this schedule occurs on.
+  ///
+  /// This is a list of integers, where each integer represents a day of the month.
+  ///
+  /// For example, if this is `[1, 15]`, then this schedule occurs on the 1st and 15th of every month.
   final List<int> days;
+
+  /// The frequency at which this schedule occurs.
+  ///
+  /// For example, if this is `2`, then this schedule occurs every other month.
   final int frequency;
 
   @override
@@ -98,6 +137,9 @@ class Monthly extends Schedule {
   }
 }
 
+/// Represents a schedule that occurs every _n_ years.
+///
+/// This schedule occurs on the same day and month as the [startDate].
 class Yearly extends Schedule {
   const Yearly({
     required super.startDate,
@@ -105,6 +147,9 @@ class Yearly extends Schedule {
     required this.frequency,
   });
 
+  /// The frequency at which this schedule occurs.
+  ///
+  /// For example, if this is `2`, then this schedule occurs every other year.
   final int frequency;
 
   @override
