@@ -9,8 +9,10 @@ jobs:
   analyze:
     name: Analyze and Test
     runs-on: ubuntu-latest
-    container: google/dart:latest
     steps:
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ^3.1.0
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: dart pub get
