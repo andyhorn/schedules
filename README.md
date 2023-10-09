@@ -1,6 +1,6 @@
 # Schedules
 
-A Dart-only package for managing recurring events.
+Manage recurring events with ease.
 
 ## Features
 
