@@ -1,6 +1,6 @@
 name: schedules
 description: Manage recurring events with ease.
-version: 0.0.1
+version: 0.0.2
 repository: https://github.com/andyhorn/schedules
 
 environment:
