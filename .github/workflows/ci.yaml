@@ -1,0 +1,22 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  analyze:
+    name: Analyze and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "stable"
+      - name: Restore packages
+        run: dart pub get
+      - name: Analyze
+        run: dart analyze
+      - name: Test
+        run: dart test
