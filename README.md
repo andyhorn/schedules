@@ -44,7 +44,7 @@ Repeats every _n_ days
 // Every other day, beginning on January 1, 2023.
 final daily = Daily(
   startDate: DateTime(2023, 01, 01),
-  interval: 2,
+  frequency: 2,
 );
 ```
 
