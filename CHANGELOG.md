@@ -1,3 +1,10 @@
+## 0.0.3
+
+- Add a release workflow file
+- Add test and analyze workflow for CI
+- Add an example
+- Improve description
+
 ## 0.0.2
 
 - Fix typos and grammar in README
