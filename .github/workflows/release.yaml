@@ -8,9 +8,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: google/dart:latest
     steps:
       - uses: actions/checkout@v2
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "stable"
       - name: Restore packages
         run: dart pub get
       - name: Analyze
