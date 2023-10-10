@@ -1,6 +1,7 @@
 name: schedules
-description: Manage recurring events with ease.
-version: 0.0.2
+description: A powerful and flexible library for managing recurring events and schedules. With Schedules, you can easily define complex schedules, including recurring events with custom intervals, exceptions, and more. Whether you're building a calendar app, a task scheduler, or anything in between, Schedules has you covered.
+
+version: 0.0.3
 repository: https://github.com/andyhorn/schedules
 
 environment:
