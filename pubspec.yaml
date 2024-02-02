@@ -1,5 +1,5 @@
 name: schedules
-description: A powerful and flexible library for managing recurring events and schedules. With Schedules, you can easily define complex schedules, including recurring events with custom intervals, exceptions, and more. Whether you're building a calendar app, a task scheduler, or anything in between, Schedules has you covered.
+description: A powerful and flexible Dart package for managing recurring events.
 
 version: 0.0.4
 repository: https://github.com/andyhorn/schedules
