@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Revise description for simplicity
+
 ## 0.0.3
 
 - Add a release workflow file
