@@ -24,6 +24,15 @@ void main() {
           isFalse,
         );
       });
+
+      test('disregards times', () {
+        expect(
+          DateTime(2023, 01, 01, 12, 30, 45).isEarlierDateThan(
+            DateTime(2023, 01, 01, 12, 45, 00),
+          ),
+          isFalse,
+        );
+      });
     });
 
     group('#isLaterDateThan', () {
@@ -45,6 +54,15 @@ void main() {
         expect(
           DateTime(2023, 01, 02).isLaterDateThan(DateTime(2023, 01, 01)),
           isTrue,
+        );
+      });
+
+      test('disregards times', () {
+        expect(
+          DateTime(2023, 01, 01, 12, 30, 45).isLaterDateThan(
+            DateTime(2023, 01, 01, 12, 15, 00),
+          ),
+          isFalse,
         );
       });
     });

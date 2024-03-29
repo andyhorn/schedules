@@ -6,8 +6,13 @@ void main() {
     group(Singular, () {
       group('#occursOn', () {
         test('is true on the correct date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isTrue);
+          final schedule = Singular(date: DateTime(2023, 01, 01, 12, 30, 45));
+          expect(schedule.occursOn(DateTime(2023, 01, 01, 12, 45, 30)), isTrue);
+        });
+
+        test('is true with differing times', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01, 12, 30, 45));
+          expect(schedule.occursOn(DateTime(2023, 01, 01, 12, 45, 00)), isTrue);
         });
 
         test('is false for incorrect date', () {
@@ -21,23 +26,23 @@ void main() {
       group('#occursOn', () {
         test('is true on the start date', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 12, 30, 45),
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 01, 12, 45, 30)), isTrue);
         });
 
         test('is true on the pattern', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 8, 15, 45),
             frequency: 3,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 04)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 01, 07)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 01, 10)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 02, 03)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 04, 3, 19, 7)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 07, 8, 12, 45)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 10, 20, 19, 19)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 02, 03, 13, 13, 13)), isTrue);
         });
 
         test('is false before the start date', () {
@@ -75,26 +80,26 @@ void main() {
 
         test('is true after the start date on the correct weekday', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 12, 30, 45),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 02, 12, 45, 30)), isTrue);
         });
 
         test('is true on the correct weekdays', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 12, 34, 56),
             frequency: 3,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 06)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 01, 23)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 01, 27)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 02, 13)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 06, 19)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 06, 07, 08, 09)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 23, 23, 23, 23)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 27, 19, 19, 19)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 02, 13, 13, 13, 13)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 06, 19, 19, 19, 19)), isTrue);
         });
 
         test('is false on incorrect weekdays', () {
@@ -146,25 +151,25 @@ void main() {
 
         test('is true on the start date if it is a selected date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 02),
+            startDate: DateTime(2023, 01, 02, 03, 04, 05),
             days: [2],
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 02, 05, 04, 03)), isTrue);
         });
 
         test('is true on a correct date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 02, 03, 04),
             days: [1, 15],
             frequency: 2,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 15)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 03, 01)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 03, 15)), isTrue);
-          expect(schedule.occursOn(DateTime(2024, 03, 15)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 15, 15, 15, 15)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 03, 01, 01, 01, 01)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 03, 15, 15, 15, 15)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 03, 15, 15, 15, 15)), isTrue);
         });
 
         test('is false on an incorrect date', () {
@@ -207,22 +212,22 @@ void main() {
       group('#occursOn', () {
         test('is true on the start date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 12, 30, 30),
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 01, 13, 13, 13)), isTrue);
         });
 
         test('is true on a correct date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023, 01, 01, 12, 30, 30),
             frequency: 2,
           );
 
-          expect(schedule.occursOn(DateTime(2025, 01, 01)), isTrue);
-          expect(schedule.occursOn(DateTime(2027, 01, 01)), isTrue);
-          expect(schedule.occursOn(DateTime(2029, 01, 01)), isTrue);
+          expect(schedule.occursOn(DateTime(2025, 01, 01, 02, 03, 04)), isTrue);
+          expect(schedule.occursOn(DateTime(2027, 01, 01, 04, 05, 06)), isTrue);
+          expect(schedule.occursOn(DateTime(2029, 01, 01, 06, 07, 08)), isTrue);
         });
 
         test('is false on an incorrect date', () {
