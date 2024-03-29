@@ -67,7 +67,7 @@ class Daily extends Schedule {
       return false;
     }
 
-    final difference = startDate.difference(date).inDays;
+    final difference = startDate.daysApartFrom(date);
     return difference % frequency == 0;
   }
 }
@@ -99,7 +99,7 @@ class Weekly extends Schedule {
       return false;
     }
 
-    final difference = startDate.difference(date).inDays.abs();
+    final difference = startDate.daysApartFrom(date);
     final numWeeks = difference ~/ 7;
     return numWeeks % frequency == 0;
   }
@@ -132,7 +132,7 @@ class Monthly extends Schedule {
       return false;
     }
 
-    final difference = startDate.getMonthsApartFrom(date);
+    final difference = startDate.monthsApartFrom(date);
     return difference % frequency == 0;
   }
 }
