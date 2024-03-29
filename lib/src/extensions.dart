@@ -17,6 +17,10 @@ extension DateTimeExtensions on DateTime {
   /// Returns a new [DateTime] with the time set to `00:00:00`.
   DateTime get zeroTime => DateTime(year, month, day);
 
+  /// Calculates the number of days between this date and the given [date],
+  /// ignoring the time.
+  int daysApartFrom(DateTime date) =>
+      zeroTime.difference(date.zeroTime).inDays.abs();
 
   /// Calculates the number of months between this date and the given [date].
   int getMonthsApartFrom(DateTime date) {
