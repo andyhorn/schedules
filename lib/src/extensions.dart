@@ -2,20 +2,21 @@ extension DateTimeExtensions on DateTime {
   /// Returns `true` if this date is earlier than the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isEarlierDateThan(DateTime date) =>
-      year < date.year || month < date.month || day < date.day;
+  bool isEarlierDateThan(DateTime date) => zeroTime.isBefore(date.zeroTime);
 
   /// Returns `true` if this date is later than the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isLaterDateThan(DateTime date) =>
-      year > date.year || month > date.month || day > date.day;
+  bool isLaterDateThan(DateTime date) => zeroTime.isAfter(date.zeroTime);
 
   /// Returns `true` if this date is the same as the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isSameDateAs(DateTime date) =>
-      year == date.year && month == date.month && day == date.day;
+  bool isSameDateAs(DateTime date) => zeroTime == date.zeroTime;
+
+  /// Returns a new [DateTime] with the time set to `00:00:00`.
+  DateTime get zeroTime => DateTime(year, month, day);
+
 
   /// Calculates the number of months between this date and the given [date].
   int getMonthsApartFrom(DateTime date) {
