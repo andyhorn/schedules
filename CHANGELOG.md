@@ -1,3 +1,8 @@
+## 0.0.5
+
+- Fix bugs in the date comparisons by properly ignoring the time component
+- Add a `daysApartFrom` extension to clean up the `difference` calculation
+
 ## 0.0.4
 
 - Revise description for simplicity
