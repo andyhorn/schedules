@@ -1,15 +1,11 @@
 name: schedules
 description: A powerful and flexible Dart package for managing recurring events.
 
-version: 0.0.4
+version: 0.0.5
 repository: https://github.com/andyhorn/schedules
 
 environment:
   sdk: ^3.1.0
-
-# Add regular dependencies here.
-# dependencies:
-# path: ^1.8.0
 
 dev_dependencies:
   lints: ^3.0.0
