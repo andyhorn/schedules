@@ -132,7 +132,7 @@ class Monthly extends Schedule {
       return false;
     }
 
-    final difference = startDate.getMonthsApartFrom(date);
+    final difference = startDate.monthsApartFrom(date);
     return difference % frequency == 0;
   }
 }

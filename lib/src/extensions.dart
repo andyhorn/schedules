@@ -23,18 +23,23 @@ extension DateTimeExtensions on DateTime {
       zeroTime.difference(date.zeroTime).inDays.abs();
 
   /// Calculates the number of months between this date and the given [date].
-  int getMonthsApartFrom(DateTime date) {
+  int monthsApartFrom(DateTime date) {
+    final dayOfMonthAdjustment = date.day >= day ? 0 : -1;
+
     if (date.year == year) {
-      return (date.month - month).abs();
+      final months = (date.month - month).abs();
+      return months + dayOfMonthAdjustment;
     }
 
     final yearDiff = (date.year - year).abs();
 
     if (yearDiff == 1) {
-      return (12 - month) + date.month;
+      final months = (12 - month) + date.month;
+      return months + dayOfMonthAdjustment;
     }
 
     final yearDiffInMonths = (yearDiff - 1) * 12;
-    return (12 - month) + date.month + yearDiffInMonths;
+    final months = (12 - month) + date.month + yearDiffInMonths;
+    return months + dayOfMonthAdjustment;
   }
 }
