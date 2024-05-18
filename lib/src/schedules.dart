@@ -39,7 +39,9 @@ sealed class Schedule {
   List<DateTime> findNextNOccurrences(Schedule schedule, int n,
       {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
     final dates = <DateTime>[];
-    var currentDate = fromDate ?? DateTime.now();
+    DateTime currentDate = fromDate ?? DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+   
     excludeDates = excludeDates
         .map((element) => DateTime(element.year, element.month, element.day))
         .toList();
@@ -64,7 +66,9 @@ sealed class Schedule {
       Schedule schedule, DateTime tillDate,
       {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
     final dates = <DateTime>[];
-    var currentDate = fromDate ?? DateTime.now();
+   DateTime currentDate = fromDate ?? DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+    
     excludeDates = excludeDates
         .map((element) => DateTime(element.year, element.month, element.day))
         .toList();
