@@ -263,4 +263,13 @@ void main() {
       });
     });
   });
+
+
+    group('findNextNOccurrences', () {
+      test('''given n required occurences if the end date happens 
+      before the n'th occurence the method returns a lower number 
+      of occurences within the start-date and end-date constraint''', () {
+        
+      });
+    });
 }
