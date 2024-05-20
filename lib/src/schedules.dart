@@ -46,7 +46,7 @@ sealed class Schedule {
         .map((element) => DateTime(element.year, element.month, element.day))
         .toList();
 
-    while (dates.length < n) {
+    while (dates.length < n && (endDate==null|| endDate!.isAfter(currentDate))) {
       // Here is the magic: Check if our Schedule occurs on the given date
       // using the "occursOn" method.
       //
