@@ -36,7 +36,7 @@ sealed class Schedule {
     return true;
   }
 
-  List<DateTime> findNextNOccurrences(Schedule schedule, int n,
+  List<DateTime> findNextNOccurrences( int n,
       {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
     final dates = <DateTime>[];
     DateTime currentDate = fromDate ?? DateTime.now();
@@ -51,7 +51,7 @@ sealed class Schedule {
       // using the "occursOn" method.
       //
       // If the current date fits the Schedule's pattern, add it to our list.
-      if (schedule.occursOn(currentDate) &&
+      if (occursOn(currentDate) &&
           !excludeDates.contains(currentDate)) {
         dates.add(currentDate);
       }
@@ -63,7 +63,7 @@ sealed class Schedule {
   }
 
   List<DateTime> findNextTillDateOccurrences(
-      Schedule schedule, DateTime tillDate,
+     DateTime tillDate,
       {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
     final dates = <DateTime>[];
    DateTime currentDate = fromDate ?? DateTime.now();
@@ -78,7 +78,7 @@ sealed class Schedule {
       // using the "occursOn" method.
       //
       // If the current date fits the Schedule's pattern, add it to our list.
-      if (schedule.occursOn(currentDate) &&
+      if (occursOn(currentDate) &&
           !excludeDates.contains(currentDate)) {
         dates.add(currentDate);
       }

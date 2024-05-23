@@ -25,7 +25,7 @@ void main() {
 //always returns false
 
     
-    List<DateTime> listDates = schedule.findNextNOccurrences(schedule, 33);
+    List<DateTime> listDates = schedule.findNextNOccurrences( 33);
      
   });
 }
