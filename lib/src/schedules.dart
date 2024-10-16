@@ -1,4 +1,4 @@
-import 'package:schedules/src/extensions.dart';
+import "extensions.dart";
 
 /// A schedule represents a set of dates that an event occurs on.
 /// This is used to determine if an event occurs on a given date.
