@@ -274,7 +274,7 @@ void main() {
           frequency: 1,
           weekdays: [2]);
 
-      List<DateTime> listDates = schedule.findNextNOccurrences( 33);
+      List<DateTime> listDates = schedule.findNextNOccurrences( 33, fromDate: schedule.startDate);
 
       expect(listDates.length, 18);
       expect(listDates.last, DateTime.parse('2024-09-17 00:00:00.000'));
