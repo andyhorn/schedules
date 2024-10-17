@@ -263,4 +263,21 @@ void main() {
       });
     });
   });
+
+  group('findNextNOccurrences', () {
+    test('''given n required occurences if the end date happens 
+      before the n'th occurence the method returns a lower number 
+      of occurences within the start-date and end-date constraint''', () {
+      Schedule schedule = Weekly(
+          endDate: DateTime.parse('2024-09-21 00:00:00.000Z'),
+          startDate: DateTime.parse('2024-05-20 00:00:00.000Z'),
+          frequency: 1,
+          weekdays: [2]);
+
+      List<DateTime> listDates = schedule.findNextNOccurrences( 33, fromDate: schedule.startDate);
+
+      expect(listDates.length, 18);
+      expect(listDates.last, DateTime.parse('2024-09-17 00:00:00.000'));
+    });
+  });
 }
