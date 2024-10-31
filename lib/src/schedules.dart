@@ -1,4 +1,4 @@
-import 'package:schedules/src/extensions.dart';
+import "extensions.dart";
 
 /// A schedule represents a set of dates that an event occurs on.
 /// This is used to determine if an event occurs on a given date.
@@ -34,6 +34,59 @@ sealed class Schedule {
     }
 
     return true;
+  }
+
+  List<DateTime> findNextNOccurrences( int n,
+      {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
+    final dates = <DateTime>[];
+    DateTime currentDate = fromDate ?? DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+   
+    excludeDates = excludeDates
+        .map((element) => DateTime(element.year, element.month, element.day))
+        .toList();
+
+    while (dates.length < n && (endDate==null|| endDate!.isAfter(currentDate))) {
+      // Here is the magic: Check if our Schedule occurs on the given date
+      // using the "occursOn" method.
+      //
+      // If the current date fits the Schedule's pattern, add it to our list.
+      if (occursOn(currentDate) &&
+          !excludeDates.contains(currentDate)) {
+        dates.add(currentDate);
+      }
+
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return dates;
+  }
+
+  List<DateTime> findNextTillDateOccurrences(
+     DateTime tillDate,
+      {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
+    final dates = <DateTime>[];
+   DateTime currentDate = fromDate ?? DateTime.now();
+    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
+    
+    excludeDates = excludeDates
+        .map((element) => DateTime(element.year, element.month, element.day))
+        .toList();
+
+    while (currentDate.isBefore(tillDate)) {
+      // Here is the magic: Check if our Schedule occurs on the given date
+      // using the "occursOn" method.
+      //
+      // If the current date fits the Schedule's pattern, add it to our list.
+      if (occursOn(currentDate) &&
+          !excludeDates.contains(currentDate)) {
+        dates.add(currentDate);
+      }
+
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return dates;
   }
 }
 
