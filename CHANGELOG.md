@@ -1,3 +1,7 @@
+## 1.0.0
+- Begin stable build versioning
+- Add two new methods for generating lists of dates that occur on a given schedule (thank you @v.paragallo.ict)
+
 ## 0.0.5
 
 - Fix bugs in the date comparisons by properly ignoring the time component
