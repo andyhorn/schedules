@@ -24,6 +24,59 @@ sealed class Schedule {
   /// Determine if this schedule includes the given [date].
   bool occursOn(DateTime date);
 
+  /// Returns a list of the next [n] dates for this schedule.
+  List<DateTime> findNextNOccurrences(
+    int n, {
+    DateTime? fromDate,
+    List<DateTime> excludeDates = const [],
+  }) {
+    final dates = <DateTime>[];
+    var currentDate = (fromDate ?? DateTime.now()).startOfDay();
+
+    excludeDates = excludeDates.map((date) => date.startOfDay()).toList();
+
+    while (dates.length < n &&
+        (endDate == null || endDate!.isAfter(currentDate))) {
+      // Here is the magic: Check if our Schedule occurs on the given date
+      // using the "occursOn" method.
+      //
+      // If the current date fits the Schedule's pattern, add it to our list.
+      if (occursOn(currentDate) && !excludeDates.contains(currentDate)) {
+        dates.add(currentDate);
+      }
+
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return dates;
+  }
+
+  /// Returns a list of dates active on the current schedule through [tillDate].
+  List<DateTime> findNextTillDateOccurrences(
+    DateTime tillDate, {
+    DateTime? fromDate,
+    List<DateTime> excludeDates = const [],
+  }) {
+    final dates = <DateTime>[];
+    var currentDate = (fromDate ?? DateTime.now()).startOfDay();
+
+    excludeDates = excludeDates.map((date) => date.startOfDay()).toList();
+
+    while (currentDate.isBefore(tillDate)) {
+      // Here is the magic: Check if our Schedule occurs on the given date
+      // using the "occursOn" method.
+      //
+      // If the current date fits the Schedule's pattern, add it to our list.
+      if (occursOn(currentDate) && !excludeDates.contains(currentDate)) {
+        dates.add(currentDate);
+      }
+
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return dates;
+  }
+
   bool _isWithinBounds(DateTime date) {
     if (date.isEarlierDateThan(startDate)) {
       return false;
@@ -34,59 +87,6 @@ sealed class Schedule {
     }
 
     return true;
-  }
-
-  List<DateTime> findNextNOccurrences( int n,
-      {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
-    final dates = <DateTime>[];
-    DateTime currentDate = fromDate ?? DateTime.now();
-    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
-   
-    excludeDates = excludeDates
-        .map((element) => DateTime(element.year, element.month, element.day))
-        .toList();
-
-    while (dates.length < n && (endDate==null|| endDate!.isAfter(currentDate))) {
-      // Here is the magic: Check if our Schedule occurs on the given date
-      // using the "occursOn" method.
-      //
-      // If the current date fits the Schedule's pattern, add it to our list.
-      if (occursOn(currentDate) &&
-          !excludeDates.contains(currentDate)) {
-        dates.add(currentDate);
-      }
-
-      currentDate = currentDate.add(const Duration(days: 1));
-    }
-
-    return dates;
-  }
-
-  List<DateTime> findNextTillDateOccurrences(
-     DateTime tillDate,
-      {DateTime? fromDate, List<DateTime> excludeDates = const []}) {
-    final dates = <DateTime>[];
-   DateTime currentDate = fromDate ?? DateTime.now();
-    currentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
-    
-    excludeDates = excludeDates
-        .map((element) => DateTime(element.year, element.month, element.day))
-        .toList();
-
-    while (currentDate.isBefore(tillDate)) {
-      // Here is the magic: Check if our Schedule occurs on the given date
-      // using the "occursOn" method.
-      //
-      // If the current date fits the Schedule's pattern, add it to our list.
-      if (occursOn(currentDate) &&
-          !excludeDates.contains(currentDate)) {
-        dates.add(currentDate);
-      }
-
-      currentDate = currentDate.add(const Duration(days: 1));
-    }
-
-    return dates;
   }
 }
 
