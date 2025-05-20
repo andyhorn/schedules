@@ -2,22 +2,24 @@ extension DateTimeExtensions on DateTime {
   /// Returns `true` if this date is earlier than the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isEarlierDateThan(DateTime date) => _dayOnly().isBefore(date._dayOnly());
+  bool isEarlierDateThan(DateTime date) =>
+      startOfDay().isBefore(date.startOfDay());
 
   /// Returns `true` if this date is later than the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isLaterDateThan(DateTime date) => _dayOnly().isAfter(date._dayOnly());
+  bool isLaterDateThan(DateTime date) =>
+      startOfDay().isAfter(date.startOfDay());
 
   /// Returns `true` if this date is the same as the given [date].
   ///
   /// This considers only the date, not the time.
-  bool isSameDateAs(DateTime date) => _dayOnly() == date._dayOnly();
+  bool isSameDateAs(DateTime date) => startOfDay() == date.startOfDay();
 
   /// Calculates the number of days between this date and the given [date],
   /// ignoring the time.
   int daysApartFrom(DateTime date) =>
-      _dayOnly().difference(date._dayOnly()).inDays.abs();
+      startOfDay().difference(date.startOfDay()).inDays.abs();
 
   /// Calculates the number of months between this date and the given [date].
   int monthsApartFrom(DateTime date) {
@@ -40,5 +42,5 @@ extension DateTimeExtensions on DateTime {
     return months + dayOfMonthAdjustment;
   }
 
-  DateTime _dayOnly() => DateTime(year, month, day);
+  DateTime startOfDay() => DateTime(year, month, day);
 }
