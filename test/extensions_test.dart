@@ -107,57 +107,102 @@ void main() {
         );
       });
 
-      test('is 1 for one month apart', () {
+      test('is -1 for one month before', () {
         expect(
           DateTime(2023, 01, 01).monthsApartFrom(DateTime(2023, 02, 01)),
+          equals(-1),
+        );
+      });
+
+      test('is 1 for one month after', () {
+        expect(
+          DateTime(2023, 02, 01).monthsApartFrom(DateTime(2023, 01, 01)),
           equals(1),
         );
       });
 
-      test(
-          'is correct count for months in different years, but less than 1 year apart',
-          () {
+      test('is 10 for 10 months ahead in a different year', () {
         expect(
-          DateTime(2023, 11, 01).monthsApartFrom(DateTime(2024, 02, 01)),
-          equals(3),
+          DateTime(2023, 07, 01).monthsApartFrom(DateTime(2022, 09, 01)),
+          equals(10),
         );
       });
 
-      test('is correct count for months in the same year', () {
+      test('is -10 for 10 months behind in a different year', () {
         expect(
-          DateTime(2023, 11, 01).monthsApartFrom(DateTime(2023, 02, 01)),
-          equals(9),
+          DateTime(2022, 09, 01).monthsApartFrom(DateTime(2023, 07, 01)),
+          equals(-10),
         );
       });
 
-      test('is correct count for multiple years apart', () {
+      test('is 12 for exactly one year ahead', () {
         expect(
-          DateTime(2023, 11, 01).monthsApartFrom(DateTime(2025, 02, 01)),
-          equals(15),
+          DateTime(2023, 01, 01).monthsApartFrom(DateTime(2022, 01, 01)),
+          equals(12),
         );
       });
 
-      group('day-of-month adjustment', () {
-        test('same year', () {
+      test('is -12 for exactly one year behind', () {
+        expect(
+          DateTime(2022, 01, 01).monthsApartFrom(DateTime(2023, 01, 01)),
+          equals(-12),
+        );
+      });
+
+      test('is 1 for two months ahead, but earlier day', () {
+        expect(
+          DateTime(2023, 03, 10).monthsApartFrom(DateTime(2023, 01, 15)),
+          equals(1),
+        );
+      });
+
+      test('is -1 for two months behind, but later day', () {
+        expect(
+          DateTime(2023, 01, 15).monthsApartFrom(DateTime(2023, 03, 10)),
+          equals(-1),
+        );
+      });
+
+      test('is 1 for two months ahead, but earlier day in different year', () {
           expect(
-            DateTime(2023, 01, 31).monthsApartFrom(DateTime(2023, 03, 15)),
+          DateTime(2024, 02, 10).monthsApartFrom(DateTime(2023, 12, 15)),
             equals(1),
           );
         });
 
-        test('different year and less than 12 months', () {
+      test('is -1 for two months behind, but later day in different year', () {
+        expect(
+          DateTime(2023, 12, 15).monthsApartFrom(DateTime(2024, 02, 10)),
+          equals(-1),
+        );
+      });
+
+      test('is 0 for same month, but later day', () {
+        expect(
+          DateTime(2023, 03, 10).monthsApartFrom(DateTime(2023, 03, 15)),
+          equals(0),
+        );
+      });
+
+      test('is 0 for same month, but earlier day', () {
           expect(
-            DateTime(2023, 10, 25).monthsApartFrom(DateTime(2024, 03, 15)),
-            equals(4),
+          DateTime(2023, 03, 15).monthsApartFrom(DateTime(2023, 03, 10)),
+          equals(0),
           );
         });
 
-        test('different year and more than 12 months', () {
+      test('is 1 for end of month to end of next month', () {
           expect(
-            DateTime(2023, 10, 25).monthsApartFrom(DateTime(2025, 03, 15)),
-            equals(16),
+          DateTime(2023, 03, 31).monthsApartFrom(DateTime(2023, 02, 28)),
+          equals(1),
           );
         });
+
+      test('is -1 for end of month to end of previous month', () {
+        expect(
+          DateTime(2023, 02, 28).monthsApartFrom(DateTime(2023, 03, 31)),
+          equals(-1),
+        );
       });
     });
   });

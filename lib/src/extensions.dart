@@ -23,23 +23,30 @@ extension DateTimeExtensions on DateTime {
 
   /// Calculates the number of months between this date and the given [date].
   int monthsApartFrom(DateTime date) {
-    final dayOfMonthAdjustment = date.day >= day ? 0 : -1;
+    final a = startOfDay();
+    final b = date.startOfDay();
 
-    if (date.year == year) {
-      final months = (date.month - month).abs();
-      return months + dayOfMonthAdjustment;
+    // if b is later, sign is positive; if b is earlier, sign is negative
+    final sign = a.isAfter(b) ? 1 : (a.isBefore(b) ? -1 : 0);
+
+    // if dates are equal, return 0
+    if (sign == 0) {
+      return 0;
     }
 
-    final yearDiff = (date.year - year).abs();
-
-    if (yearDiff == 1) {
-      final months = (12 - month) + date.month;
-      return months + dayOfMonthAdjustment;
+    bool isEndOfMonth(DateTime date) {
+      return date.day == DateTime(date.year, date.month + 1, 0).day;
     }
 
-    final yearDiffInMonths = (yearDiff - 1) * 12;
-    final months = (12 - month) + date.month + yearDiffInMonths;
-    return months + dayOfMonthAdjustment;
+    final start = sign > 0 ? b : a;
+    final end = sign > 0 ? a : b;
+    final isFullMonth = end.day >= start.day;
+    final offset =
+        isFullMonth ? 0 : (isEndOfMonth(date) && isEndOfMonth(start) ? 0 : -1);
+    final months =
+        (end.year - start.year) * 12 + (end.month - start.month) + offset;
+
+    return months * sign;
   }
 
   DateTime startOfDay() => DateTime(year, month, day);
