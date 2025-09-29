@@ -16,17 +16,25 @@ extension DateTimeExtensions on DateTime {
   /// This considers only the date, not the time.
   bool isSameDateAs(DateTime date) => startOfDay() == date.startOfDay();
 
-  /// Calculates the number of days between this date and the given [date],
+  /// Calculates the number of days (signed) between this date and the given [date],
   /// ignoring the time.
+  ///
+  /// A positive value means this date is later than the given date,
+  /// a negative value means this date is earlier than the given date,
+  /// and zero means they are the same date.
   int daysApartFrom(DateTime date) =>
       startOfDay().difference(date.startOfDay()).inDays;
 
-  /// Calculates the number of months between this date and the given [date].
+  /// Calculates the number of months (signed) between this date and the given [date].
+  ///
+  /// A positive value means this date is later than the given date,
+  /// a negative value means this date is earlier than the given date,
+  /// and zero means they are in the same month and year.
   int monthsApartFrom(DateTime date) {
     final a = startOfDay();
     final b = date.startOfDay();
 
-    // if b is later, sign is positive; if b is earlier, sign is negative
+    // if a is later, sign is positive; if a is earlier, sign is negative
     final sign = a.isAfter(b) ? 1 : (a.isBefore(b) ? -1 : 0);
 
     // if dates are equal, return 0
@@ -61,5 +69,7 @@ extension DateTimeExtensions on DateTime {
     return totalMonths * sign;
   }
 
+  /// Returns a new [DateTime] representing the start of the day (midnight)
+  /// for this date (removes the time component).
   DateTime startOfDay() => DateTime(year, month, day);
 }
