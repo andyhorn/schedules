@@ -40,13 +40,25 @@ extension DateTimeExtensions on DateTime {
 
     final start = sign > 0 ? b : a;
     final end = sign > 0 ? a : b;
-    final isFullMonth = end.day >= start.day;
-    final offset =
-        isFullMonth ? 0 : (isEndOfMonth(date) && isEndOfMonth(start) ? 0 : -1);
-    final months =
-        (end.year - start.year) * 12 + (end.month - start.month) + offset;
 
-    return months * sign;
+    int getOffset() {
+      if (start.day == end.day) {
+        return 0;
+      }
+
+      if (isEndOfMonth(start) && isEndOfMonth(end)) {
+        return 0;
+      }
+
+      return start.day < end.day ? 0 : -1;
+    }
+
+    final years = end.year - start.year;
+    final months = end.month - start.month;
+    final offset = getOffset();
+    final totalMonths = years * 12 + months + offset;
+
+    return totalMonths * sign;
   }
 
   DateTime startOfDay() => DateTime(year, month, day);
