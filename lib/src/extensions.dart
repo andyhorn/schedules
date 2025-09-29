@@ -19,7 +19,7 @@ extension DateTimeExtensions on DateTime {
   /// Calculates the number of days between this date and the given [date],
   /// ignoring the time.
   int daysApartFrom(DateTime date) =>
-      startOfDay().difference(date.startOfDay()).inDays.abs();
+      startOfDay().difference(date.startOfDay()).inDays;
 
   /// Calculates the number of months between this date and the given [date].
   int monthsApartFrom(DateTime date) {

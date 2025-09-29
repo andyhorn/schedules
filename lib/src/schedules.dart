@@ -120,7 +120,7 @@ class Daily extends Schedule {
       return false;
     }
 
-    final difference = startDate.daysApartFrom(date);
+    final difference = startDate.daysApartFrom(date).abs();
     return difference % frequency == 0;
   }
 }
@@ -152,7 +152,7 @@ class Weekly extends Schedule {
       return false;
     }
 
-    final difference = startDate.daysApartFrom(date);
+    final difference = startDate.daysApartFrom(date).abs();
     final numWeeks = difference ~/ 7;
     return numWeeks % frequency == 0;
   }

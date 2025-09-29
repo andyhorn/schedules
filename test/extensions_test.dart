@@ -99,6 +99,66 @@ void main() {
       });
     });
 
+    group('#daysApartFrom', () {
+      test('is 0 for the same date', () {
+        expect(
+          DateTime(2023, 01, 01).daysApartFrom(DateTime(2023, 01, 01)),
+          equals(0),
+        );
+      });
+
+      test('is -1 for one day before', () {
+        expect(
+          DateTime(2023, 01, 01).daysApartFrom(DateTime(2023, 01, 02)),
+          equals(-1),
+        );
+      });
+
+      test('is 1 for one day after', () {
+        expect(
+          DateTime(2023, 01, 02).daysApartFrom(DateTime(2023, 01, 01)),
+          equals(1),
+        );
+      });
+
+      test('is -10 for 10 days behind in a different month', () {
+        expect(
+          DateTime(2023, 11, 24).daysApartFrom(DateTime(2023, 12, 04)),
+          equals(-10),
+        );
+      });
+
+      test('is 10 for 10 days ahead in a different month', () {
+        expect(
+          DateTime(2023, 12, 04).daysApartFrom(DateTime(2023, 11, 24)),
+          equals(10),
+        );
+      });
+
+      test('is 365 for exactly one year ahead', () {
+        expect(
+          DateTime(2023, 01, 01).daysApartFrom(DateTime(2022, 01, 01)),
+          equals(365),
+        );
+      });
+
+      test('is -365 for exactly one year behind', () {
+        expect(
+          DateTime(2022, 01, 01).daysApartFrom(DateTime(2023, 01, 01)),
+          equals(-365),
+        );
+      });
+
+      test('disregards times', () {
+        expect(
+          DateTime(2023, 01, 01, 12, 30, 45).daysApartFrom(
+            DateTime(2023, 01, 02, 12, 15, 00),
+          ),
+          equals(-1),
+        );
+      });
+    });
+
     group('#getMonthsApartFrom', () {
       test('is 0 for the same date', () {
         expect(
@@ -164,11 +224,11 @@ void main() {
       });
 
       test('is 1 for two months ahead, but earlier day in different year', () {
-          expect(
+        expect(
           DateTime(2024, 02, 10).monthsApartFrom(DateTime(2023, 12, 15)),
-            equals(1),
-          );
-        });
+          equals(1),
+        );
+      });
 
       test('is -1 for two months behind, but later day in different year', () {
         expect(
@@ -185,18 +245,18 @@ void main() {
       });
 
       test('is 0 for same month, but earlier day', () {
-          expect(
+        expect(
           DateTime(2023, 03, 15).monthsApartFrom(DateTime(2023, 03, 10)),
           equals(0),
-          );
-        });
+        );
+      });
 
       test('is 1 for end of month to end of next month', () {
-          expect(
+        expect(
           DateTime(2023, 03, 31).monthsApartFrom(DateTime(2023, 02, 28)),
           equals(1),
-          );
-        });
+        );
+      });
 
       test('is -1 for end of month to end of previous month', () {
         expect(
