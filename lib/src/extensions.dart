@@ -77,7 +77,7 @@ extension DateTimeExtensions on DateTime {
   DateTime endOfMonth() => DateTime(year, month + 1, 0);
 
   /// Returns a new [DateTime] by adding the given number of [months] to this date.
-  DateTime addMonths(int months, [bool overflow = true]) {
+  DateTime addMonths(int months, {bool overflow = true}) {
     final newDate = DateTime(year, month + months, day);
 
     if (overflow) {
@@ -93,7 +93,7 @@ extension DateTimeExtensions on DateTime {
   }
 
   /// Returns a new [DateTime] by adding the given number of [years] to this date.
-  DateTime addYears(int years, [bool overflow = true]) {
+  DateTime addYears(int years, {bool overflow = true}) {
     final newDate = DateTime(year + years, month, day);
 
     if (overflow) {

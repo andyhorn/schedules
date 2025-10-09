@@ -359,7 +359,7 @@ void main() {
           'handles end-of-month with overflow=false (adjusts to last day of month)',
           () {
         final date = DateTime(2023, 1, 31);
-        final result = date.addMonths(1, false);
+        final result = date.addMonths(1, overflow: false);
         // Should be Feb 28 (2023 is not a leap year)
         expect(result.year, equals(2023));
         expect(result.month, equals(2));
@@ -368,7 +368,7 @@ void main() {
 
       test('handles end-of-month with overflow=false in leap year', () {
         final date = DateTime(2024, 1, 31);
-        final result = date.addMonths(1, false);
+        final result = date.addMonths(1, overflow: false);
         // Should be Feb 29 (2024 is a leap year)
         expect(result.year, equals(2024));
         expect(result.month, equals(2));
@@ -377,7 +377,7 @@ void main() {
 
       test('handles negative months with overflow=false', () {
         final date = DateTime(2023, 3, 31);
-        final result = date.addMonths(-1, false);
+        final result = date.addMonths(-1, overflow: false);
         // Should be Feb 28 (2023 is not a leap year)
         expect(result.year, equals(2023));
         expect(result.month, equals(2));
@@ -386,7 +386,7 @@ void main() {
 
       test('handles negative months with overflow=false in leap year', () {
         final date = DateTime(2024, 3, 31);
-        final result = date.addMonths(-1, false);
+        final result = date.addMonths(-1, overflow: false);
         // Should be Feb 29 (2024 is a leap year)
         expect(result.year, equals(2024));
         expect(result.month, equals(2));
@@ -395,7 +395,7 @@ void main() {
 
       test('handles adding 12 months (one year) with overflow=false', () {
         final date = DateTime(2023, 2, 28);
-        final result = date.addMonths(12, false);
+        final result = date.addMonths(12, overflow: false);
         expect(result.year, equals(2024));
         expect(result.month, equals(2));
         expect(result.day, equals(28));
@@ -405,7 +405,7 @@ void main() {
           'handles adding months resulting in a month with fewer days (overflow=false)',
           () {
         final date = DateTime(2023, 5, 31);
-        final result = date.addMonths(1, false);
+        final result = date.addMonths(1, overflow: false);
         // June has 30 days
         expect(result.year, equals(2023));
         expect(result.month, equals(6));
@@ -416,7 +416,7 @@ void main() {
           'handles adding months resulting in a month with more days (overflow=false)',
           () {
         final date = DateTime(2023, 4, 30);
-        final result = date.addMonths(1, false);
+        final result = date.addMonths(1, overflow: false);
         // May has 31 days, should be May 30
         expect(result.year, equals(2023));
         expect(result.month, equals(5));
@@ -431,7 +431,7 @@ void main() {
 
       test('handles adding zero months with overflow=false', () {
         final date = DateTime(2023, 7, 31);
-        final result = date.addMonths(0, false);
+        final result = date.addMonths(0, overflow: false);
         expect(result, equals(date));
       });
     });
@@ -457,7 +457,7 @@ void main() {
 
     test('handles leap year overflow=false (Feb 29 to Feb 28)', () {
       final date = DateTime(2020, 2, 29);
-      final result = date.addYears(1, false);
+      final result = date.addYears(1, overflow: false);
       // 2021 is not a leap year, so should be Feb 28
       expect(result.year, equals(2021));
       expect(result.month, equals(2));
@@ -466,7 +466,7 @@ void main() {
 
     test('handles leap year overflow=false (Feb 29 to Feb 29)', () {
       final date = DateTime(2020, 2, 29);
-      final result = date.addYears(4, false);
+      final result = date.addYears(4, overflow: false);
       // 2024 is a leap year, so should be Feb 29
       expect(result.year, equals(2024));
       expect(result.month, equals(2));
@@ -475,7 +475,7 @@ void main() {
 
     test('handles overflow=true for leap year (Feb 29 to Mar 1)', () {
       final date = DateTime(2020, 2, 29);
-      final result = date.addYears(1, true);
+      final result = date.addYears(1, overflow: true);
       // 2021 is not a leap year, so should be Mar 1
       expect(result.year, equals(2021));
       expect(result.month, equals(3));
@@ -484,7 +484,7 @@ void main() {
 
     test('handles negative years with overflow=false', () {
       final date = DateTime(2024, 2, 29);
-      final result = date.addYears(-1, false);
+      final result = date.addYears(-1, overflow: false);
       // 2023 is not a leap year, so should be Feb 28
       expect(result.year, equals(2023));
       expect(result.month, equals(2));
@@ -493,7 +493,7 @@ void main() {
 
     test('handles adding zero years with overflow=false', () {
       final date = DateTime(2023, 7, 31);
-      final result = date.addYears(0, false);
+      final result = date.addYears(0, overflow: false);
       expect(result, equals(date));
     });
   });
