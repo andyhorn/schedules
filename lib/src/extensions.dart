@@ -72,4 +72,64 @@ extension DateTimeExtensions on DateTime {
   /// Returns a new [DateTime] representing the start of the day (midnight)
   /// for this date (removes the time component).
   DateTime startOfDay() => DateTime(year, month, day);
+
+  /// Returns a new [DateTime] representing the last day of the month.
+  DateTime endOfMonth() => DateTime(year, month + 1, 0);
+
+  /// Returns a new [DateTime] by adding the given number of [months] to this date.
+  DateTime addMonths(int months, [bool overflow = true]) {
+    final newDate = DateTime(year, month + months, day);
+
+    if (overflow) {
+      return newDate;
+    }
+
+    // Handle month overflow (e.g., adding 1 month to Jan 31 should result in Feb 28/29)
+    if (newDate.month != ((month + months - 1) % 12) + 1) {
+      return DateTime(newDate.year, newDate.month, 0);
+    }
+
+    return newDate;
+  }
+
+  /// Returns a new [DateTime] by adding the given number of [years] to this date.
+  DateTime addYears(int years, [bool overflow = true]) {
+    final newDate = DateTime(year + years, month, day);
+
+    if (overflow) {
+      return newDate;
+    }
+
+    // Handle month overflow (e.g., adding 1 year to Feb 29 on a leap year should result in Feb 28)
+    if (newDate.month != month) {
+      return DateTime(newDate.year, newDate.month, 0);
+    }
+
+    return newDate;
+  }
+
+  /// Returns a new [DateTime] with the same year and month as this date,
+  /// but with the given [day].
+  DateTime withDay(int day) {
+    if (day < 1 || day > 31) {
+      throw ArgumentError.value(day, 'day', 'Day must be between 1 and 31');
+    }
+
+    final newDate = DateTime(year, month, day);
+
+    if (newDate.month != month) {
+      throw ArgumentError.value(day, 'day', 'Invalid day for the month');
+    }
+
+    return newDate;
+  }
+
+  /// Returns a new [DateTime] with the same year and day as this date,
+  /// but with the given [weekday].
+  DateTime withWeekday(int weekday) {
+    final currentWeekday = this.weekday;
+    final daysDifference = weekday - currentWeekday;
+
+    return add(Duration(days: daysDifference));
+  }
 }
