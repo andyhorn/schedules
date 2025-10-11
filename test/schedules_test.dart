@@ -281,4 +281,357 @@ void main() {
       expect(listDates.last, DateTime.parse('2024-09-17 00:00:00.000'));
     });
   });
+
+  group('getNextNOccurrences', () {
+    group('Singular', () {
+      test('returns the single occurrence if in range', () {
+        final schedule = Singular(date: DateTime(2023, 01, 01));
+        final occurrences = schedule.getNextNOccurrences(3).toList();
+
+        expect(occurrences, [DateTime(2023, 01, 01)]);
+      });
+
+      test('returns empty if date is after start date', () {
+        final schedule = Singular(date: DateTime(2023, 01, 01));
+        final occurrences = schedule
+            .getNextNOccurrences(1, from: DateTime(2023, 01, 02))
+            .toList();
+
+        expect(occurrences, isEmpty);
+      });
+    });
+
+    group('Daily', () {
+      test('returns correct next occurrences', () {
+        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+        final occurrences = schedule.getNextNOccurrences(3).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 01),
+          DateTime(2023, 01, 03),
+          DateTime(2023, 01, 05),
+        ]);
+      });
+
+      test('respects endDate', () {
+        final schedule = Daily(
+          startDate: DateTime(2023, 01, 01),
+          endDate: DateTime(2023, 01, 04),
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(5).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 01),
+          DateTime(2023, 01, 02),
+          DateTime(2023, 01, 03),
+          DateTime(2023, 01, 04),
+        ]);
+      });
+
+      test('returns correct occurrences when starting mid-pattern', () {
+        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
+        final occurrences = schedule
+            .getNextNOccurrences(3, from: DateTime(2023, 01, 02))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 04),
+          DateTime(2023, 01, 07),
+          DateTime(2023, 01, 10),
+        ]);
+      });
+    });
+
+    group('Weekly', () {
+      test('returns correct occurrences', () {
+        final schedule = Weekly(
+          startDate: DateTime(2023, 01, 01), // Sunday
+          frequency: 1,
+          weekdays: [DateTime.monday, DateTime.friday],
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 02),
+          DateTime(2023, 01, 06),
+          DateTime(2023, 01, 09),
+          DateTime(2023, 01, 13),
+        ]);
+      });
+
+      test('respects endDate', () {
+        final schedule = Weekly(
+          startDate: DateTime(2023, 01, 01),
+          endDate: DateTime(2023, 01, 10),
+          frequency: 1,
+          weekdays: [DateTime.monday],
+        );
+
+        final occurrences = schedule.getNextNOccurrences(5).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 02),
+          DateTime(2023, 01, 09),
+        ]);
+      });
+
+      test('returns correct occurrences when starting mid-pattern', () {
+        final schedule = Weekly(
+          startDate: DateTime(2023, 01, 01), // Sunday
+          frequency: 1,
+          weekdays: [DateTime.monday, DateTime.friday],
+        );
+
+        final occurrences = schedule
+            .getNextNOccurrences(4, from: DateTime(2023, 01, 03))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 06),
+          DateTime(2023, 01, 09),
+          DateTime(2023, 01, 13),
+          DateTime(2023, 01, 16),
+        ]);
+      });
+    });
+
+    group('Monthly', () {
+      test('returns correct days', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          days: [1, 15],
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 01),
+          DateTime(2023, 01, 15),
+          DateTime(2023, 02, 01),
+          DateTime(2023, 02, 15),
+        ]);
+      });
+
+      test('respects endDate', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          endDate: DateTime(2023, 03, 10),
+          days: [1, 15],
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(6).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 01),
+          DateTime(2023, 01, 15),
+          DateTime(2023, 02, 01),
+          DateTime(2023, 02, 15),
+          DateTime(2023, 03, 01),
+        ]);
+      });
+
+      test('returns correct occurrences when starting mid-pattern', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          days: [1, 15],
+          frequency: 1,
+        );
+
+        final occurrences = schedule
+            .getNextNOccurrences(4, from: DateTime(2023, 01, 16))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2023, 02, 01),
+          DateTime(2023, 02, 15),
+          DateTime(2023, 03, 01),
+          DateTime(2023, 03, 15),
+        ]);
+      });
+
+      test('skips invalid days in short months', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          days: [31],
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(3).toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 31),
+          DateTime(2023, 03, 31),
+          DateTime(2023, 05, 31),
+        ]);
+      });
+
+      test('handles starting at the end of a month', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          days: [31],
+          frequency: 1,
+        );
+
+        final occurrences = schedule
+            .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 31),
+          DateTime(2023, 03, 31),
+          DateTime(2023, 05, 31),
+        ]);
+      });
+
+      test('handles starting at the end of a month with frequency 2', () {
+        final schedule = Monthly(
+          startDate: DateTime(2023, 01, 01),
+          days: [31],
+          frequency: 2,
+        );
+
+        final occurrences = schedule
+            .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2023, 01, 31),
+          DateTime(2023, 03, 31),
+          DateTime(2023, 05, 31),
+        ]);
+      });
+    });
+
+    group('Yearly', () {
+      test('returns correct dates', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 01, 01),
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(3).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 01, 01),
+          DateTime(2021, 01, 01),
+          DateTime(2022, 01, 01),
+        ]);
+      });
+
+      test('returns correct dates with frequency', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 01, 01),
+          frequency: 2,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(3).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 01, 01),
+          DateTime(2022, 01, 01),
+          DateTime(2024, 01, 01),
+        ]);
+      });
+
+      test('respects endDate', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 01, 01),
+          endDate: DateTime(2024, 01, 01),
+          frequency: 2,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(5).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 01, 01),
+          DateTime(2022, 01, 01),
+          DateTime(2024, 01, 01),
+        ]);
+      });
+
+      test('returns correct occurrences when starting mid-pattern', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 01, 01),
+          frequency: 2,
+        );
+
+        final occurrences = schedule
+            .getNextNOccurrences(3, from: DateTime(2021, 06, 15))
+            .toList();
+
+        expect(occurrences, [
+          DateTime(2022, 01, 01),
+          DateTime(2024, 01, 01),
+          DateTime(2026, 01, 01),
+        ]);
+      });
+
+      test('handles leap years correctly', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 02, 29),
+          frequency: 1,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 02, 29),
+          DateTime(2024, 02, 29),
+          DateTime(2028, 02, 29),
+          DateTime(2032, 02, 29),
+        ]);
+      });
+
+      test('handles leap years correctly with frequency other than 1', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 02, 29),
+          frequency: 2,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 02, 29),
+          DateTime(2024, 02, 29),
+          DateTime(2028, 02, 29),
+          DateTime(2032, 02, 29),
+        ]);
+      });
+
+      test('handles leap years correctly with odd frequency', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 02, 29),
+          frequency: 3,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        expect(occurrences, [
+          DateTime(2020, 02, 29),
+          DateTime(2032, 02, 29),
+          DateTime(2044, 02, 29),
+          DateTime(2056, 02, 29),
+        ]);
+      });
+
+      test('handles LCM of 0 with frequency 0', () {
+        final schedule = Yearly(
+          startDate: DateTime(2020, 02, 29),
+          frequency: 0,
+        );
+
+        final occurrences = schedule.getNextNOccurrences(4).toList();
+
+        // With frequency 0, LCM([0, 4]) = 0, so only the start date should be returned
+        expect(occurrences, [
+          DateTime(2020, 02, 29),
+        ]);
+      });
+    });
+  });
 }

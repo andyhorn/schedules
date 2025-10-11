@@ -1,3 +1,5 @@
+import "package:schedules/src/math.dart";
+
 import "extensions.dart";
 
 /// A schedule represents a set of dates that an event occurs on.
@@ -23,6 +25,9 @@ sealed class Schedule {
 
   /// Determine if this schedule includes the given [date].
   bool occursOn(DateTime date);
+
+  /// Returns an iterable of the next [n] occurrences for this schedule.
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from});
 
   /// Returns a list of the next [n] dates for this schedule.
   List<DateTime> findNextNOccurrences(
@@ -88,6 +93,22 @@ sealed class Schedule {
 
     return true;
   }
+
+  DateTime _clampToBounds(DateTime? date) {
+    if (date == null) return startDate;
+
+    if (date.isEarlierDateThan(startDate)) {
+      return startDate;
+    }
+
+    if (endDate case final endDate?) {
+      if (date.isLaterDateThan(endDate)) {
+        return endDate;
+      }
+    }
+
+    return date;
+  }
 }
 
 /// Represents a schedule that occurs only once.
@@ -99,6 +120,15 @@ class Singular extends Schedule {
 
   @override
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);
+
+  @override
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) {
+    if (from != null && from.isLaterDateThan(startDate)) {
+      return const <DateTime>[];
+    }
+
+    return [startDate];
+  }
 }
 
 /// Represents a schedule that occurs every _n_ days.
@@ -122,6 +152,35 @@ class Daily extends Schedule {
 
     final difference = startDate.daysApartFrom(date).abs();
     return difference % frequency == 0;
+  }
+
+  @override
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+    var currentDate = _clampToBounds(from).startOfDay();
+    currentDate = _getFirstValidDate(currentDate).startOfDay();
+
+    // Generate the next n occurrences
+    for (var i = 0; i < n; i++) {
+      if (endDate case final endDate?) {
+        if (currentDate.isLaterDateThan(endDate)) {
+          break;
+        }
+      }
+
+      yield currentDate;
+
+      currentDate = currentDate.add(Duration(days: frequency));
+    }
+  }
+
+  DateTime _getFirstValidDate(DateTime from) {
+    final offset = startDate.daysApartFrom(from).abs() % frequency;
+
+    if (offset != 0) {
+      return from.add(Duration(days: frequency - offset));
+    }
+
+    return from;
   }
 }
 
@@ -156,6 +215,75 @@ class Weekly extends Schedule {
     final numWeeks = difference ~/ 7;
     return numWeeks % frequency == 0;
   }
+
+  @override
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+    final sortedWeekdays = weekdays.toList()..sort();
+
+    var currentWeek = _clampToBounds(from).startOfDay();
+    currentWeek = _getFirstValidWeek(currentWeek).startOfDay();
+
+    final firstValidDay = _getFirstValidDay(currentWeek, sortedWeekdays);
+
+    var occurrencesFound = 0;
+    while (occurrencesFound < n) {
+      for (final weekday in weekdays) {
+        final date = currentWeek.withWeekday(weekday);
+        final isBeforeFirstValidDay = date.isEarlierDateThan(firstValidDay);
+
+        if (isBeforeFirstValidDay) {
+          continue;
+        }
+
+        if (endDate case final endDate?) {
+          if (date.isLaterDateThan(endDate)) {
+            return;
+          }
+        }
+
+        yield date;
+        occurrencesFound++;
+
+        if (occurrencesFound == n) {
+          return;
+        }
+      }
+
+      currentWeek = currentWeek.add(Duration(days: frequency * 7));
+    }
+  }
+
+  DateTime _getFirstValidWeek(DateTime from) {
+    final offsetDays = startDate.daysApartFrom(from).abs();
+    final offsetWeeks = (offsetDays ~/ 7) % frequency;
+    final totalWeeks = offsetDays ~/ 7;
+
+    if (offsetWeeks != 0) {
+      final duration = (totalWeeks + (frequency - offsetWeeks)) * 7;
+      from = startDate.add(Duration(days: duration));
+    }
+
+    return from;
+  }
+
+  DateTime _getFirstValidDay(DateTime date, List<int> sortedWeekdays) {
+    if (!weekdays.contains(date.weekday)) {
+      final index = sortedWeekdays.indexWhere((day) => day > date.weekday);
+
+      if (index != -1) {
+        // Move to the next valid day in the current week
+        return date.add(Duration(days: sortedWeekdays[index] - date.weekday));
+      }
+
+      // Move to the first valid day in the next valid week
+      final nextWeekday = sortedWeekdays.first;
+      final daysUntilNextWeek = 7 - date.weekday;
+
+      return date.add(Duration(days: daysUntilNextWeek + nextWeekday));
+    }
+
+    return date;
+  }
 }
 
 /// Represents a schedule that occurs every _n_ months on the given [days].
@@ -188,6 +316,77 @@ class Monthly extends Schedule {
     final difference = startDate.monthsApartFrom(date);
     return difference % frequency == 0;
   }
+
+  DateTime _getFirstValidDate(DateTime from) {
+    from = _clampToBounds(from);
+
+    final monthsApart = startDate.monthsApartFrom(from).abs();
+    final offset = monthsApart % frequency;
+
+    if (offset != 0) {
+      from = DateTime(from.year, from.month + (frequency - offset), 1);
+    }
+
+    final sortedDays = days.toList()..sort();
+    final index = sortedDays.indexWhere((day) => day >= from.day);
+
+    if (index != -1) {
+      from = DateTime(from.year, from.month, sortedDays[index]);
+    } else {
+      // Find the first valid day in the next valid month according to the frequency
+      // and the first sorted day. For example, if the frequency is 1 and the first sorted day is
+      // 31, then find the next month with 31 days.
+      do {
+        from = DateTime(from.year, from.month + frequency, sortedDays.first);
+      } while (from.day != sortedDays.first);
+    }
+
+    return from;
+  }
+
+  @override
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+    final sortedDays = days.toList()..sort();
+    final firstValidDay = _getFirstValidDate(_clampToBounds(from));
+
+    var currentMonth = firstValidDay.startOfMonth();
+    var occurrencesFound = 0;
+    while (occurrencesFound < n) {
+      final lastDayOfMonth = currentMonth.endOfMonth().day;
+
+      for (final day in sortedDays) {
+        final isBeyondLastDay = day > lastDayOfMonth;
+
+        if (isBeyondLastDay) {
+          continue;
+        }
+
+        final date = currentMonth.withDay(day);
+        final isBeforeFirstValidDay = date.isEarlierDateThan(firstValidDay);
+
+        if (isBeforeFirstValidDay) {
+          continue;
+        }
+
+        if (endDate case final endDate?) {
+          if (date.isLaterDateThan(endDate)) {
+            // No more valid dates can be found
+            return;
+          }
+        }
+
+        yield date;
+        occurrencesFound++;
+
+        if (occurrencesFound == n) {
+          return;
+        }
+      }
+
+      // Move to the next valid month based on frequency
+      currentMonth = currentMonth.addMonths(frequency, overflow: false);
+    }
+  }
 }
 
 /// Represents a schedule that occurs every _n_ years.
@@ -216,5 +415,44 @@ class Yearly extends Schedule {
     }
 
     return (startDate.year - date.year).abs() % frequency == 0;
+  }
+
+  @override
+  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+    var currentDate = _clampToBounds(from).startOfDay();
+    currentDate = _getNextValidDay(from ?? startDate);
+
+    final isLeapYear = currentDate.month == 2 && currentDate.day == 29;
+
+    for (var i = 0; i < n; i++) {
+      if (endDate case final endDate?) {
+        if (currentDate.isLaterDateThan(endDate)) {
+          break;
+        }
+      }
+
+      yield currentDate;
+
+      if (isLeapYear) {
+        // Use math to find the next leap year that also satisfies the
+        // frequency requirement.
+        final lcm = getLCM([frequency, 4]);
+
+        if (lcm == 0) {
+          break;
+        }
+
+        currentDate = currentDate.addYears(lcm, overflow: false);
+      } else {
+        currentDate = currentDate.addYears(frequency, overflow: false);
+      }
+    }
+  }
+
+  DateTime _getNextValidDay(DateTime from) {
+    final offset = (startDate.year - from.year).abs() % frequency;
+    final year = offset == 0 ? from.year : from.year + (frequency - offset);
+
+    return DateTime(year, startDate.month, startDate.day);
   }
 }
