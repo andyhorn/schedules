@@ -287,6 +287,16 @@ void main() {
       });
     });
 
+    group('#startOfMonth', () {
+      test('returns the first day of the month', () {
+        final date = DateTime(2023, 7, 10);
+        final start = date.startOfMonth();
+        expect(start.year, equals(2023));
+        expect(start.month, equals(7));
+        expect(start.day, equals(1));
+      });
+    });
+
     group('#endOfMonth', () {
       test('returns last day of a 31-day month', () {
         final date = DateTime(2023, 7, 10);

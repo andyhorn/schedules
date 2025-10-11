@@ -76,6 +76,9 @@ extension DateTimeExtensions on DateTime {
   /// Returns a new [DateTime] representing the last day of the month.
   DateTime endOfMonth() => DateTime(year, month + 1, 0);
 
+  /// Returns a new [DateTime] representing the start of the month.
+  DateTime startOfMonth() => DateTime(year, month, 1);
+
   /// Returns a new [DateTime] by adding the given number of [months] to this date.
   DateTime addMonths(int months, {bool overflow = true}) {
     final newDate = DateTime(year, month + months, day);
