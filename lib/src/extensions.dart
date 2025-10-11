@@ -16,6 +16,20 @@ extension DateTimeExtensions on DateTime {
   /// This considers only the date, not the time.
   bool isSameDateAs(DateTime date) => startOfDay() == date.startOfDay();
 
+  /// Returns `true` if this date is earlier than or the same as the given [date].
+  ///
+  /// This considers only the date, not the time.
+  bool isEarlierOrSameDateAs(DateTime date) =>
+      startOfDay().isBefore(date.startOfDay()) ||
+      startOfDay() == date.startOfDay();
+
+  /// Returns `true` if this date is later than or the same as the given [date].
+  ///
+  /// This considers only the date, not the time.
+  bool isLaterOrSameDateAs(DateTime date) =>
+      startOfDay().isAfter(date.startOfDay()) ||
+      startOfDay() == date.startOfDay();
+
   /// Calculates the number of days (signed) between this date and the given [date],
   /// ignoring the time.
   ///

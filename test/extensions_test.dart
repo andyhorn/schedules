@@ -159,6 +159,70 @@ void main() {
       });
     });
 
+    group('#isEarlierOrSameDateAs', () {
+      test('is true for earlier dates', () {
+        expect(
+          DateTime(2023, 01, 01).isEarlierOrSameDateAs(DateTime(2023, 01, 02)),
+          isTrue,
+        );
+      });
+
+      test('is true for same date', () {
+        expect(
+          DateTime(2023, 01, 01).isEarlierOrSameDateAs(DateTime(2023, 01, 01)),
+          isTrue,
+        );
+      });
+
+      test('is false for later dates', () {
+        expect(
+          DateTime(2023, 01, 02).isEarlierOrSameDateAs(DateTime(2023, 01, 01)),
+          isFalse,
+        );
+      });
+
+      test('disregards times', () {
+        expect(
+          DateTime(2023, 01, 01, 12, 30, 45).isEarlierOrSameDateAs(
+            DateTime(2023, 01, 01, 12, 45, 00),
+          ),
+          isTrue,
+        );
+      });
+    });
+
+    group('#isLaterOrSameDateAs', () {
+      test('is false for earlier date', () {
+        expect(
+          DateTime(2023, 01, 01).isLaterOrSameDateAs(DateTime(2023, 01, 02)),
+          isFalse,
+        );
+      });
+
+      test('is true for same date', () {
+        expect(
+          DateTime(2023, 01, 01).isLaterOrSameDateAs(DateTime(2023, 01, 01)),
+          isTrue,
+        );
+      });
+
+      test('is true for later date', () {
+        expect(
+          DateTime(2023, 01, 02).isLaterOrSameDateAs(DateTime(2023, 01, 01)),
+          isTrue,
+        );
+      });
+
+      test('disregards times', () {
+        expect(
+          DateTime(2023, 01, 01, 12, 30, 45).isLaterOrSameDateAs(
+            DateTime(2023, 01, 01, 12, 15, 00),
+          ),
+          isTrue,
+        );
+      });
+    });
+
     group('#getMonthsApartFrom', () {
       test('is 0 for the same date', () {
         expect(
@@ -445,103 +509,103 @@ void main() {
         expect(result, equals(date));
       });
     });
-  });
 
-  group('#addYears', () {
-    test('adds years', () {
-      final date = DateTime(2020, 2, 29);
-      final result = date.addYears(1);
-      // 2021 is not a leap year, so Feb 29 becomes Mar 1
-      expect(result.year, equals(2021));
-      expect(result.month, equals(3));
-      expect(result.day, equals(1));
+    group('#addYears', () {
+      test('adds years', () {
+        final date = DateTime(2020, 2, 29);
+        final result = date.addYears(1);
+        // 2021 is not a leap year, so Feb 29 becomes Mar 1
+        expect(result.year, equals(2021));
+        expect(result.month, equals(3));
+        expect(result.day, equals(1));
+      });
+
+      test('subtracts years', () {
+        final date = DateTime(2023, 5, 10);
+        final result = date.addYears(-2);
+        expect(result.year, equals(2021));
+        expect(result.month, equals(5));
+        expect(result.day, equals(10));
+      });
+
+      test('handles leap year overflow=false (Feb 29 to Feb 28)', () {
+        final date = DateTime(2020, 2, 29);
+        final result = date.addYears(1, overflow: false);
+        // 2021 is not a leap year, so should be Feb 28
+        expect(result.year, equals(2021));
+        expect(result.month, equals(2));
+        expect(result.day, equals(28));
+      });
+
+      test('handles leap year overflow=false (Feb 29 to Feb 29)', () {
+        final date = DateTime(2020, 2, 29);
+        final result = date.addYears(4, overflow: false);
+        // 2024 is a leap year, so should be Feb 29
+        expect(result.year, equals(2024));
+        expect(result.month, equals(2));
+        expect(result.day, equals(29));
+      });
+
+      test('handles overflow=true for leap year (Feb 29 to Mar 1)', () {
+        final date = DateTime(2020, 2, 29);
+        final result = date.addYears(1, overflow: true);
+        // 2021 is not a leap year, so should be Mar 1
+        expect(result.year, equals(2021));
+        expect(result.month, equals(3));
+        expect(result.day, equals(1));
+      });
+
+      test('handles negative years with overflow=false', () {
+        final date = DateTime(2024, 2, 29);
+        final result = date.addYears(-1, overflow: false);
+        // 2023 is not a leap year, so should be Feb 28
+        expect(result.year, equals(2023));
+        expect(result.month, equals(2));
+        expect(result.day, equals(28));
+      });
+
+      test('handles adding zero years with overflow=false', () {
+        final date = DateTime(2023, 7, 31);
+        final result = date.addYears(0, overflow: false);
+        expect(result, equals(date));
+      });
     });
 
-    test('subtracts years', () {
-      final date = DateTime(2023, 5, 10);
-      final result = date.addYears(-2);
-      expect(result.year, equals(2021));
-      expect(result.month, equals(5));
-      expect(result.day, equals(10));
+    group('#withDay', () {
+      test('returns date with new day', () {
+        final date = DateTime(2023, 5);
+        final result = date.withDay(20);
+        expect(result.year, equals(2023));
+        expect(result.month, equals(5));
+        expect(result.day, equals(20));
+      });
+
+      test('throws ArgumentError for invalid day', () {
+        expect(() => DateTime(2023, 5).withDay(0), throwsArgumentError);
+        expect(() => DateTime(2023, 5).withDay(32), throwsArgumentError);
+        expect(() => DateTime(2023, 2).withDay(29),
+            throwsArgumentError); // Feb has 28 days in 2023
+      });
     });
 
-    test('handles leap year overflow=false (Feb 29 to Feb 28)', () {
-      final date = DateTime(2020, 2, 29);
-      final result = date.addYears(1, overflow: false);
-      // 2021 is not a leap year, so should be Feb 28
-      expect(result.year, equals(2021));
-      expect(result.month, equals(2));
-      expect(result.day, equals(28));
-    });
+    group('#withWeekday', () {
+      test('returns same date if weekday is the same', () {
+        final date = DateTime(2023, 5, 10); // Wednesday
+        final result = date.withWeekday(DateTime.wednesday);
+        expect(result, equals(date));
+      });
 
-    test('handles leap year overflow=false (Feb 29 to Feb 29)', () {
-      final date = DateTime(2020, 2, 29);
-      final result = date.addYears(4, overflow: false);
-      // 2024 is a leap year, so should be Feb 29
-      expect(result.year, equals(2024));
-      expect(result.month, equals(2));
-      expect(result.day, equals(29));
-    });
+      test('returns next weekday if weekday is after current', () {
+        final date = DateTime(2023, 5, 10); // Wednesday
+        final result = date.withWeekday(DateTime.friday);
+        expect(result, equals(date.add(Duration(days: 2))));
+      });
 
-    test('handles overflow=true for leap year (Feb 29 to Mar 1)', () {
-      final date = DateTime(2020, 2, 29);
-      final result = date.addYears(1, overflow: true);
-      // 2021 is not a leap year, so should be Mar 1
-      expect(result.year, equals(2021));
-      expect(result.month, equals(3));
-      expect(result.day, equals(1));
-    });
-
-    test('handles negative years with overflow=false', () {
-      final date = DateTime(2024, 2, 29);
-      final result = date.addYears(-1, overflow: false);
-      // 2023 is not a leap year, so should be Feb 28
-      expect(result.year, equals(2023));
-      expect(result.month, equals(2));
-      expect(result.day, equals(28));
-    });
-
-    test('handles adding zero years with overflow=false', () {
-      final date = DateTime(2023, 7, 31);
-      final result = date.addYears(0, overflow: false);
-      expect(result, equals(date));
-    });
-  });
-
-  group('#withDay', () {
-    test('returns date with new day', () {
-      final date = DateTime(2023, 5);
-      final result = date.withDay(20);
-      expect(result.year, equals(2023));
-      expect(result.month, equals(5));
-      expect(result.day, equals(20));
-    });
-
-    test('throws ArgumentError for invalid day', () {
-      expect(() => DateTime(2023, 5).withDay(0), throwsArgumentError);
-      expect(() => DateTime(2023, 5).withDay(32), throwsArgumentError);
-      expect(() => DateTime(2023, 2).withDay(29),
-          throwsArgumentError); // Feb has 28 days in 2023
-    });
-  });
-
-  group('#withWeekday', () {
-    test('returns same date if weekday is the same', () {
-      final date = DateTime(2023, 5, 10); // Wednesday
-      final result = date.withWeekday(DateTime.wednesday);
-      expect(result, equals(date));
-    });
-
-    test('returns next weekday if weekday is after current', () {
-      final date = DateTime(2023, 5, 10); // Wednesday
-      final result = date.withWeekday(DateTime.friday);
-      expect(result, equals(date.add(Duration(days: 2))));
-    });
-
-    test('returns previous weekday if weekday is before current', () {
-      final date = DateTime(2023, 5, 10); // Wednesday
-      final result = date.withWeekday(DateTime.monday);
-      expect(result, equals(date.add(Duration(days: -2))));
+      test('returns previous weekday if weekday is before current', () {
+        final date = DateTime(2023, 5, 10); // Wednesday
+        final result = date.withWeekday(DateTime.monday);
+        expect(result, equals(date.add(Duration(days: -2))));
+      });
     });
   });
 }
