@@ -712,6 +712,115 @@ void main() {
           expect(occurrences, isEmpty);
         });
       });
+
+      group('#getNextNOccurrences', () {
+        test('returns correct days', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 15),
+            DateTime(2023, 02, 01),
+            DateTime(2023, 02, 15),
+          ]);
+        });
+
+        test('respects endDate', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 03, 10),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(6).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 15),
+            DateTime(2023, 02, 01),
+            DateTime(2023, 02, 15),
+            DateTime(2023, 03, 01),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(4, from: DateTime(2023, 01, 16))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 02, 01),
+            DateTime(2023, 02, 15),
+            DateTime(2023, 03, 01),
+            DateTime(2023, 03, 15),
+          ]);
+        });
+
+        test('skips invalid days in short months', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [31],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 31),
+            DateTime(2023, 03, 31),
+            DateTime(2023, 05, 31),
+          ]);
+        });
+
+        test('handles starting at the end of a month', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [31],
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 31),
+            DateTime(2023, 03, 31),
+            DateTime(2023, 05, 31),
+          ]);
+        });
+
+        test('handles starting at the end of a month with frequency 2', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [31],
+            frequency: 2,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 31),
+            DateTime(2023, 03, 31),
+            DateTime(2023, 05, 31),
+          ]);
+        });
+      });
     });
 
     group(Yearly, () {
@@ -933,115 +1042,6 @@ void main() {
   });
 
   group('getNextNOccurrences', () {
-    group('Monthly', () {
-      test('returns correct days', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          days: [1, 15],
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(4).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 15),
-          DateTime(2023, 02, 01),
-          DateTime(2023, 02, 15),
-        ]);
-      });
-
-      test('respects endDate', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 03, 10),
-          days: [1, 15],
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(6).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 15),
-          DateTime(2023, 02, 01),
-          DateTime(2023, 02, 15),
-          DateTime(2023, 03, 01),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          days: [1, 15],
-          frequency: 1,
-        );
-
-        final occurrences = schedule
-            .getNextNOccurrences(4, from: DateTime(2023, 01, 16))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 02, 01),
-          DateTime(2023, 02, 15),
-          DateTime(2023, 03, 01),
-          DateTime(2023, 03, 15),
-        ]);
-      });
-
-      test('skips invalid days in short months', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          days: [31],
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 31),
-          DateTime(2023, 03, 31),
-          DateTime(2023, 05, 31),
-        ]);
-      });
-
-      test('handles starting at the end of a month', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          days: [31],
-          frequency: 1,
-        );
-
-        final occurrences = schedule
-            .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 31),
-          DateTime(2023, 03, 31),
-          DateTime(2023, 05, 31),
-        ]);
-      });
-
-      test('handles starting at the end of a month with frequency 2', () {
-        final schedule = Monthly(
-          startDate: DateTime(2023, 01, 01),
-          days: [31],
-          frequency: 2,
-        );
-
-        final occurrences = schedule
-            .getNextNOccurrences(3, from: DateTime(2023, 01, 31))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 31),
-          DateTime(2023, 03, 31),
-          DateTime(2023, 05, 31),
-        ]);
-      });
-    });
-
     group('Yearly', () {
       test('returns correct dates', () {
         final schedule = Yearly(
