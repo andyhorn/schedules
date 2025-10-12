@@ -169,6 +169,54 @@ void main() {
 
           expect(schedule.occursOn(DateTime(2023, 01, 11)), isFalse);
         });
+
+        test('handles end-of-month transitions correctly', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 31),
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 31)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 2, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 2, 28)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 3, 1)), isTrue);
+        });
+
+        test('handles month transitions with large frequency', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 30, // Every 30 days
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 1, 31)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 3, 2)), isTrue);
+        });
+
+        test('handles year transitions correctly', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 12, 31),
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 12, 31)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 1, 2)), isTrue);
+        });
+
+        test('handles very large frequency', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1000, // Every 1000 days
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2025, 9, 27)),
+              isTrue); // Exactly 1000 days later
+          expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 1, 1001)),
+              isTrue); // 1000 days later
+        });
       });
 
       group('#getOccurrencesUntil', () {
@@ -377,6 +425,46 @@ void main() {
             throwsA(isA<AssertionError>()));
       });
 
+      test('throws error for empty weekdays list', () {
+        expect(
+            () => Weekly(
+                  startDate: DateTime(2023, 1, 1),
+                  frequency: 1,
+                  weekdays: [], // Empty list
+                ),
+            throwsA(isA<AssertionError>()));
+      });
+
+      test('throws error for invalid weekday values', () {
+        expect(
+            () => Weekly(
+                  startDate: DateTime(2023, 1, 1),
+                  frequency: 1,
+                  weekdays: [0, 8], // Invalid weekdays (0 and 8)
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('throws error for negative weekday values', () {
+        expect(
+            () => Weekly(
+                  startDate: DateTime(2023, 1, 1),
+                  frequency: 1,
+                  weekdays: [-1, 3], // Negative weekday
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('accepts valid weekday values', () {
+        expect(
+            () => Weekly(
+                  startDate: DateTime(2023, 1, 1),
+                  frequency: 1,
+                  weekdays: [1, 2, 3, 4, 5, 6, 7], // All valid weekdays
+                ),
+            returnsNormally);
+      });
+
       group('#occursOn', () {
         test('is false on the start date if it is not the correct weekday', () {
           final schedule = Weekly(
@@ -443,6 +531,21 @@ void main() {
           );
 
           expect(schedule.occursOn(DateTime(2023, 02, 06)), isFalse);
+        });
+
+        test('handles very large frequency', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 52, // Every 52 weeks (1 year)
+            weekdays: [DateTime.sunday],
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 12, 31)),
+              isTrue); // Exactly 52 weeks later
+          expect(schedule.occursOn(DateTime(2023, 1, 8)), isFalse);
+          expect(schedule.occursOn(DateTime(2024, 12, 29)),
+              isTrue); // Another 52 weeks later
         });
       });
 
@@ -701,6 +804,46 @@ void main() {
             throwsA(isA<AssertionError>()));
       });
 
+      test('throws error for empty days list', () {
+        expect(
+            () => Monthly(
+                  startDate: DateTime(2023, 1, 1),
+                  days: [], // Empty list
+                  frequency: 1,
+                ),
+            throwsA(isA<AssertionError>()));
+      });
+
+      test('throws error for invalid day values', () {
+        expect(
+            () => Monthly(
+                  startDate: DateTime(2023, 1, 1),
+                  days: [0, 32], // Invalid days (0 and 32)
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('throws error for negative day values', () {
+        expect(
+            () => Monthly(
+                  startDate: DateTime(2023, 1, 1),
+                  days: [-1, 15], // Negative day
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('accepts valid day values', () {
+        expect(
+            () => Monthly(
+                  startDate: DateTime(2023, 1, 1),
+                  days: [1, 15, 31], // Valid days
+                  frequency: 1,
+                ),
+            returnsNormally);
+      });
+
       group('#occursOn', () {
         test('is false on the start date if it is not a selected date', () {
           final schedule = Monthly(
@@ -767,6 +910,18 @@ void main() {
           );
 
           expect(schedule.occursOn(DateTime(2023, 03, 01)), isFalse);
+        });
+
+        test('handles very large frequency', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 1, 1),
+            days: [1],
+            frequency: 12, // Every 12 months (1 year)
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 2, 1)), isFalse);
         });
       });
 
@@ -1148,6 +1303,17 @@ void main() {
 
           expect(schedule.occursOn(DateTime(2026, 01, 01)), isFalse);
         });
+
+        test('handles very large frequency', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 10, // Every 10 years
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2033, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 1, 1)), isFalse);
+        });
       });
 
       group('#getOccurrencesUntil', () {
@@ -1493,6 +1659,190 @@ void main() {
 
       expect(listDates.length, 18);
       expect(listDates.last, DateTime.parse('2024-09-17 00:00:00.000'));
+    });
+  });
+
+  group('Performance Tests', () {
+    test('handles large number of occurrences efficiently', () {
+      final schedule = Daily(startDate: DateTime(2023, 1, 1), frequency: 1);
+      final stopwatch = Stopwatch()..start();
+
+      final occurrences = schedule.getNextNOccurrences(1000).toList();
+
+      stopwatch.stop();
+      expect(occurrences.length, equals(1000));
+      expect(occurrences.last,
+          equals(DateTime(2023, 1, 1).add(Duration(days: 999))));
+      expect(stopwatch.elapsedMilliseconds, lessThan(100)); // Should be fast
+    });
+
+    test('handles large frequency efficiently', () {
+      final schedule = Daily(startDate: DateTime(2023, 1, 1), frequency: 1000);
+      final stopwatch = Stopwatch()..start();
+
+      final occurrences = schedule.getNextNOccurrences(10).toList();
+
+      stopwatch.stop();
+      expect(occurrences.length, equals(10));
+      expect(occurrences[1],
+          equals(DateTime(2023, 1, 1).add(Duration(days: 1000))));
+      expect(stopwatch.elapsedMilliseconds, lessThan(50)); // Should be fast
+    });
+
+    test('handles large date ranges efficiently', () {
+      final schedule = Daily(
+        startDate: DateTime(2023, 1, 1),
+        frequency: 1,
+        endDate: DateTime(2025, 1, 1),
+      );
+
+      final stopwatch = Stopwatch()..start();
+      final occurrences =
+          schedule.getOccurrencesUntil(DateTime(2025, 1, 1)).toList();
+      stopwatch.stop();
+
+      expect(occurrences.length,
+          equals(732)); // 2 years + 1 day (including end date)
+      expect(stopwatch.elapsedMilliseconds, lessThan(200)); // Should be fast
+    });
+  });
+
+  group('Real-World Scenario Tests', () {
+    test('bi-weekly payroll schedule', () {
+      // Every other Friday starting from Jan 6, 2023
+      final schedule = Weekly(
+        startDate: DateTime(2023, 1, 6), // First Friday
+        frequency: 2,
+        weekdays: [DateTime.friday],
+      );
+
+      final paydays = schedule.getNextNOccurrences(6).toList();
+      expect(paydays[0], equals(DateTime(2023, 1, 6)));
+      expect(paydays[1], equals(DateTime(2023, 1, 20)));
+      expect(paydays[2], equals(DateTime(2023, 2, 3)));
+      expect(paydays[3], equals(DateTime(2023, 2, 17)));
+      expect(paydays[4], equals(DateTime(2023, 3, 3)));
+      expect(paydays[5], equals(DateTime(2023, 3, 17)));
+    });
+
+    test('quarterly report schedule', () {
+      // Every 3 months on the 15th
+      final schedule = Monthly(
+        startDate: DateTime(2023, 1, 15),
+        days: [15],
+        frequency: 3,
+      );
+
+      final reports =
+          schedule.getOccurrencesUntil(DateTime(2024, 1, 1)).toList();
+      expect(reports.length, equals(4)); // Q1, Q2, Q3, Q4
+      expect(reports[0], equals(DateTime(2023, 1, 15)));
+      expect(reports[1], equals(DateTime(2023, 4, 15)));
+      expect(reports[2], equals(DateTime(2023, 7, 15)));
+      expect(reports[3], equals(DateTime(2023, 10, 15)));
+    });
+
+    test('daily standup meeting schedule', () {
+      // Every weekday (Monday to Friday)
+      final schedule = Weekly(
+        startDate: DateTime(2023, 1, 2), // First Monday
+        frequency: 1,
+        weekdays: [
+          DateTime.monday,
+          DateTime.tuesday,
+          DateTime.wednesday,
+          DateTime.thursday,
+          DateTime.friday,
+        ],
+      );
+
+      final meetings = schedule.getNextNOccurrences(10).toList();
+      expect(meetings.length, equals(10));
+      expect(meetings[0], equals(DateTime(2023, 1, 2))); // Monday
+      expect(meetings[1], equals(DateTime(2023, 1, 3))); // Tuesday
+      expect(meetings[2], equals(DateTime(2023, 1, 4))); // Wednesday
+      expect(meetings[3], equals(DateTime(2023, 1, 5))); // Thursday
+      expect(meetings[4], equals(DateTime(2023, 1, 6))); // Friday
+      expect(meetings[5], equals(DateTime(2023, 1, 9))); // Next Monday
+    });
+
+    test('monthly rent payment schedule', () {
+      // First day of every month
+      final schedule = Monthly(
+        startDate: DateTime(2023, 1, 1),
+        days: [1],
+        frequency: 1,
+      );
+
+      final payments =
+          schedule.getOccurrencesUntil(DateTime(2024, 1, 1)).toList();
+      expect(payments.length, equals(13)); // 12 months + 1 (including end date)
+      expect(payments[0], equals(DateTime(2023, 1, 1)));
+      expect(payments[11], equals(DateTime(2023, 12, 1)));
+    });
+
+    test('annual subscription renewal', () {
+      // Every year on the same date
+      final schedule = Yearly(
+        startDate: DateTime(2023, 3, 15),
+        frequency: 1,
+      );
+
+      final renewals = schedule.getNextNOccurrences(5).toList();
+      expect(renewals.length, equals(5));
+      expect(renewals[0], equals(DateTime(2023, 3, 15)));
+      expect(renewals[1], equals(DateTime(2024, 3, 15)));
+      expect(renewals[2], equals(DateTime(2025, 3, 15)));
+      expect(renewals[3], equals(DateTime(2026, 3, 15)));
+      expect(renewals[4], equals(DateTime(2027, 3, 15)));
+    });
+
+    test('complex monthly schedule with multiple days', () {
+      // Every 2 months on the 1st, 15th, and last day
+      final schedule = Monthly(
+        startDate: DateTime(2023, 1, 1),
+        days: [1, 15, 31], // Including last day
+        frequency: 2,
+      );
+
+      final occurrences =
+          schedule.getOccurrencesUntil(DateTime(2023, 7, 1)).toList();
+      expect(occurrences.length,
+          equals(10)); // 3 months * 3 days + 1 (including end date)
+      expect(occurrences[0], equals(DateTime(2023, 1, 1)));
+      expect(occurrences[1], equals(DateTime(2023, 1, 15)));
+      expect(occurrences[2], equals(DateTime(2023, 1, 31)));
+      expect(occurrences[3], equals(DateTime(2023, 3, 1)));
+      expect(occurrences[4], equals(DateTime(2023, 3, 15)));
+      expect(occurrences[5], equals(DateTime(2023, 3, 31)));
+      expect(occurrences[6], equals(DateTime(2023, 5, 1)));
+      expect(occurrences[7], equals(DateTime(2023, 5, 15)));
+      expect(occurrences[8], equals(DateTime(2023, 5, 31)));
+      expect(occurrences[9], equals(DateTime(2023, 7, 1))); // End date
+    });
+
+    test('weekly schedule across month boundaries', () {
+      // Every Tuesday and Friday, starting mid-month
+      final schedule = Weekly(
+        startDate: DateTime(2023, 1, 15), // Mid-month start
+        frequency: 1,
+        weekdays: [DateTime.tuesday, DateTime.friday],
+      );
+
+      final occurrences =
+          schedule.getOccurrencesUntil(DateTime(2023, 2, 15)).toList();
+      expect(occurrences.length,
+          equals(9)); // 4 weeks * 2 days + 1 (including end date)
+      expect(occurrences[0], equals(DateTime(2023, 1, 17))); // First Tuesday
+      expect(occurrences[1], equals(DateTime(2023, 1, 20))); // First Friday
+      expect(occurrences[2], equals(DateTime(2023, 1, 24))); // Second Tuesday
+      expect(occurrences[3], equals(DateTime(2023, 1, 27))); // Second Friday
+      expect(occurrences[4], equals(DateTime(2023, 1, 31))); // Third Tuesday
+      expect(occurrences[5], equals(DateTime(2023, 2, 3))); // Third Friday
+      expect(occurrences[6], equals(DateTime(2023, 2, 7))); // Fourth Tuesday
+      expect(occurrences[7], equals(DateTime(2023, 2, 10))); // Fourth Friday
+      expect(occurrences[8],
+          equals(DateTime(2023, 2, 14))); // Fifth Tuesday (end date)
     });
   });
 }
