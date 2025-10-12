@@ -1778,7 +1778,7 @@ void main() {
 
       final payments =
           schedule.getOccurrencesUntil(DateTime(2024, 1, 1)).toList();
-      expect(payments.length, equals(13)); // 12 months + 1 (including end date)
+      expect(payments.length, equals(13)); // 12 months + 1 (end date is included because it matches the schedule pattern)
       expect(payments[0], equals(DateTime(2023, 1, 1)));
       expect(payments[11], equals(DateTime(2023, 12, 1)));
     });
