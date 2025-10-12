@@ -1832,7 +1832,7 @@ void main() {
       final occurrences =
           schedule.getOccurrencesUntil(DateTime(2023, 2, 15)).toList();
       expect(occurrences.length,
-          equals(9)); // 4 weeks * 2 days + 1 (including end date)
+          equals(9)); // There are 9 Tuesdays/Fridays between 2023-01-15 and 2023-02-15 inclusive
       expect(occurrences[0], equals(DateTime(2023, 1, 17))); // First Tuesday
       expect(occurrences[1], equals(DateTime(2023, 1, 20))); // First Friday
       expect(occurrences[2], equals(DateTime(2023, 1, 24))); // Second Tuesday
