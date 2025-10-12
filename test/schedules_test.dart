@@ -221,6 +221,51 @@ void main() {
           expect(occurrences, isEmpty);
         });
       });
+
+      group('#getNextNOccurrences', () {
+        test('returns correct next occurrences', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 03),
+            DateTime(2023, 01, 05),
+          ]);
+        });
+
+        test('respects endDate', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 01, 04),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(5).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 03),
+            DateTime(2023, 01, 04),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
+          final occurrences = schedule
+              .getNextNOccurrences(3, from: DateTime(2023, 01, 02))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 04),
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 10),
+          ]);
+        });
+      });
     });
 
     group(Weekly, () {
@@ -834,49 +879,6 @@ void main() {
   });
 
   group('getNextNOccurrences', () {
-    group('Daily', () {
-      test('returns correct next occurrences', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 03),
-          DateTime(2023, 01, 05),
-        ]);
-      });
-
-      test('respects endDate', () {
-        final schedule = Daily(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 01, 04),
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(5).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 02),
-          DateTime(2023, 01, 03),
-          DateTime(2023, 01, 04),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
-        final occurrences = schedule
-            .getNextNOccurrences(3, from: DateTime(2023, 01, 02))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 04),
-          DateTime(2023, 01, 07),
-          DateTime(2023, 01, 10),
-        ]);
-      });
-    });
-
     group('Weekly', () {
       test('returns correct occurrences', () {
         final schedule = Weekly(
