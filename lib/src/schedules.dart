@@ -119,7 +119,7 @@ class Singular extends Schedule {
   const Singular({
     // renamed to be more explicit that this is a single date
     required DateTime date,
-  }) : super(startDate: date);
+  }) : super(startDate: date, endDate: date);
 
   @override
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);
@@ -148,12 +148,18 @@ class Singular extends Schedule {
 }
 
 /// Represents a schedule that occurs every _n_ days.
+///
+/// Throws an [AssertionError] if the frequency is less than 1.
 class Daily extends Schedule {
-  const Daily({
+  Daily({
     required super.startDate,
     required this.frequency,
     super.endDate,
-  });
+  }) {
+    if (frequency < 1) {
+      throw AssertionError('Frequency must be greater than or equal to 1');
+    }
+  }
 
   /// The frequency at which this schedule occurs.
   ///
@@ -230,13 +236,19 @@ class Daily extends Schedule {
 }
 
 /// Represents a schedule that occurs every _n_ weeks on the given [weekdays].
+///
+/// Throws an [AssertionError] if the frequency is less than 1.
 class Weekly extends Schedule {
-  const Weekly({
+  Weekly({
     required super.startDate,
     required this.frequency,
     required this.weekdays,
     super.endDate,
-  });
+  }) {
+    if (frequency < 1) {
+      throw AssertionError('Frequency must be greater than or equal to 1');
+    }
+  }
 
   /// The frequency at which this schedule occurs.
   ///
@@ -378,13 +390,19 @@ class Weekly extends Schedule {
 }
 
 /// Represents a schedule that occurs every _n_ months on the given [days].
+///
+/// Throws an [AssertionError] if the frequency is less than 1.
 class Monthly extends Schedule {
-  const Monthly({
+  Monthly({
     required super.startDate,
     super.endDate,
     required this.days,
     required this.frequency,
-  });
+  }) {
+    if (frequency < 1) {
+      throw AssertionError('Frequency must be greater than or equal to 1');
+    }
+  }
 
   /// The days of the month that this schedule occurs on.
   ///
@@ -535,12 +553,18 @@ class Monthly extends Schedule {
 /// Represents a schedule that occurs every _n_ years.
 ///
 /// This schedule occurs on the same day and month as the [startDate].
+///
+/// Throws an [AssertionError] if the frequency is less than 1.
 class Yearly extends Schedule {
-  const Yearly({
+  Yearly({
     required super.startDate,
     super.endDate,
     required this.frequency,
-  });
+  }) {
+    if (frequency < 1) {
+      throw AssertionError('Frequency must be greater than or equal to 1');
+    }
+  }
 
   /// The frequency at which this schedule occurs.
   ///

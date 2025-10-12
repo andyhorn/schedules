@@ -23,6 +23,11 @@ void main() {
     });
 
     group(Daily, () {
+      test('throws an error if frequency is 0', () {
+        expect(() => Daily(startDate: DateTime(2023, 01, 01), frequency: 0),
+            throwsA(isA<AssertionError>()));
+      });
+
       group('#occursOn', () {
         test('is true on the start date', () {
           final schedule = Daily(
@@ -67,6 +72,16 @@ void main() {
     });
 
     group(Weekly, () {
+      test('throws an error if frequency is less than 1', () {
+        expect(
+            () => Weekly(
+                  startDate: DateTime(2023, 01, 01),
+                  frequency: 0,
+                  weekdays: [DateTime.monday],
+                ),
+            throwsA(isA<AssertionError>()));
+      });
+
       group('#occursOn', () {
         test('is false on the start date if it is not the correct weekday', () {
           final schedule = Weekly(
@@ -138,6 +153,16 @@ void main() {
     });
 
     group(Monthly, () {
+      test('throws an error if frequency is less than 1', () {
+        expect(
+            () => Monthly(
+                  startDate: DateTime(2023, 01, 01),
+                  days: [1],
+                  frequency: 0,
+                ),
+            throwsA(isA<AssertionError>()));
+      });
+
       group('#occursOn', () {
         test('is false on the start date if it is not a selected date', () {
           final schedule = Monthly(
@@ -209,6 +234,15 @@ void main() {
     });
 
     group(Yearly, () {
+      test('throws an error if frequency is less than 1', () {
+        expect(
+            () => Yearly(
+                  startDate: DateTime(2023, 01, 01),
+                  frequency: 0,
+                ),
+            throwsA(isA<AssertionError>()));
+      });
+
       group('#occursOn', () {
         test('is true on the start date', () {
           final schedule = Yearly(
