@@ -27,12 +27,18 @@ sealed class Schedule {
   bool occursOn(DateTime date);
 
   /// Returns an iterable of the next [n] occurrences for this schedule.
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude});
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  });
 
   /// Returns an iterable of the occurrences for this schedule until the given [end] date.
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude});
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  });
 
   /// Returns a list of the next [n] dates for this schedule.
   @Deprecated(
@@ -135,8 +141,11 @@ class Singular extends Schedule {
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude}) {
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) {
     final isAfterStartDate = from != null && from.isLaterDateThan(startDate);
     final isExcluded = exclude?.any(startDate.isSameDateAs) ?? false;
 
@@ -148,8 +157,11 @@ class Singular extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude}) {
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) {
     final date = from ?? startDate;
     final isAfterStartDate = date.isLaterDateThan(startDate);
     final isAfterEndDate = date.isLaterDateThan(end);
@@ -193,8 +205,11 @@ class Daily extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
@@ -229,8 +244,11 @@ class Daily extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     var currentDate = (from ?? startDate).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
@@ -327,8 +345,11 @@ class Weekly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     final sortedWeekdays = weekdays.toList()..sort();
 
     var currentWeek = _clampToBounds(from).startOfDay();
@@ -384,8 +405,11 @@ class Weekly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     final sortedWeekdays = weekdays.toList()..sort();
 
     var currentWeek = _clampToBounds(from).startOfDay();
@@ -516,36 +540,12 @@ class Monthly extends Schedule {
     return difference % frequency == 0;
   }
 
-  DateTime _getFirstValidDate(DateTime from) {
-    from = _clampToBounds(from);
-
-    final monthsApart = startDate.monthsApartFrom(from).abs();
-    final offset = monthsApart % frequency;
-
-    if (offset != 0) {
-      from = DateTime(from.year, from.month + (frequency - offset), 1);
-    }
-
-    final sortedDays = days.toList()..sort();
-    final index = sortedDays.indexWhere((day) => day >= from.day);
-
-    if (index != -1) {
-      from = DateTime(from.year, from.month, sortedDays[index]);
-    } else {
-      // Find the first valid day in the next valid month according to the frequency
-      // and the first sorted day. For example, if the frequency is 1 and the first sorted day is
-      // 31, then find the next month with 31 days.
-      do {
-        from = DateTime(from.year, from.month + frequency, sortedDays.first);
-      } while (from.day != sortedDays.first);
-    }
-
-    return from;
-  }
-
   @override
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     final sortedDays = days.toList()..sort();
     final firstValidDay = _getFirstValidDate(_clampToBounds(from));
 
@@ -604,8 +604,11 @@ class Monthly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     final sortedDays = days.toList()..sort();
     final firstValidDay = _getFirstValidDate(_clampToBounds(from));
 
@@ -663,6 +666,33 @@ class Monthly extends Schedule {
       currentMonth = currentMonth.addMonths(frequency, overflow: false);
     }
   }
+
+  DateTime _getFirstValidDate(DateTime from) {
+    from = _clampToBounds(from);
+
+    final monthsApart = startDate.monthsApartFrom(from).abs();
+    final offset = monthsApart % frequency;
+
+    if (offset != 0) {
+      from = DateTime(from.year, from.month + (frequency - offset), 1);
+    }
+
+    final sortedDays = days.toList()..sort();
+    final index = sortedDays.indexWhere((day) => day >= from.day);
+
+    if (index != -1) {
+      from = DateTime(from.year, from.month, sortedDays[index]);
+    } else {
+      // Find the first valid day in the next valid month according to the frequency
+      // and the first sorted day. For example, if the frequency is 1 and the first sorted day is
+      // 31, then find the next month with 31 days.
+      do {
+        from = DateTime(from.year, from.month + frequency, sortedDays.first);
+      } while (from.day != sortedDays.first);
+    }
+
+    return from;
+  }
 }
 
 /// Represents a schedule that occurs every _n_ years.
@@ -700,8 +730,11 @@ class Yearly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getNextNOccurrences(
+    int n, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getNextValidDay(from ?? startDate);
 
@@ -749,8 +782,11 @@ class Yearly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end,
-      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(
+    DateTime end, {
+    DateTime? from,
+    Iterable<DateTime>? exclude,
+  }) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getNextValidDay(from ?? startDate);
 
