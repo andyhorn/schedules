@@ -69,6 +69,24 @@ void main() {
           expect(occurrences, isEmpty);
         });
       });
+
+      group('#getNextNOccurrences', () {
+        test('returns the single occurrence if in range', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, [DateTime(2023, 01, 01)]);
+        });
+
+        test('returns empty if date is after start date', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule
+              .getNextNOccurrences(1, from: DateTime(2023, 01, 02))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+      });
     });
 
     group(Daily, () {
@@ -816,24 +834,6 @@ void main() {
   });
 
   group('getNextNOccurrences', () {
-    group('Singular', () {
-      test('returns the single occurrence if in range', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences, [DateTime(2023, 01, 01)]);
-      });
-
-      test('returns empty if date is after start date', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences = schedule
-            .getNextNOccurrences(1, from: DateTime(2023, 01, 02))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-    });
-
     group('Daily', () {
       test('returns correct next occurrences', () {
         final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
