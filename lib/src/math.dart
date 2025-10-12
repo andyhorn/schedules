@@ -18,7 +18,6 @@ int getLCM(List<int> numbers) {
   if (numbers.any((n) => n == 0)) return 0;
 
   // Get prime factors for all numbers
-
   final allPrimeFactors = numbers.map(getPrimeFactors).toList();
 
   // Create a map to store the maximum exponent for each prime factor
