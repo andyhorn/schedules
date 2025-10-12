@@ -126,7 +126,7 @@ void main() {
     group(Daily, () {
       test('throws an error if frequency is 0', () {
         expect(() => Daily(startDate: DateTime(2023, 01, 01), frequency: 0),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       group('#occursOn', () {
@@ -422,7 +422,7 @@ void main() {
                   frequency: 0,
                   weekdays: [DateTime.monday],
                 ),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       test('throws error for empty weekdays list', () {
@@ -432,7 +432,7 @@ void main() {
                   frequency: 1,
                   weekdays: [], // Empty list
                 ),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       test('throws error for invalid weekday values', () {
@@ -801,7 +801,7 @@ void main() {
                   days: [1],
                   frequency: 0,
                 ),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       test('throws error for empty days list', () {
@@ -811,7 +811,7 @@ void main() {
                   days: [], // Empty list
                   frequency: 1,
                 ),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       test('throws error for invalid day values', () {
@@ -1249,7 +1249,7 @@ void main() {
                   startDate: DateTime(2023, 01, 01),
                   frequency: 0,
                 ),
-            throwsA(isA<AssertionError>()));
+            throwsA(isA<ArgumentError>()));
       });
 
       group('#occursOn', () {

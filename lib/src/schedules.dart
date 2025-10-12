@@ -177,7 +177,7 @@ class Singular extends Schedule {
 
 /// Represents a schedule that occurs every _n_ days.
 ///
-/// Throws an [AssertionError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if the frequency is less than 1.
 class Daily extends Schedule {
   Daily({
     required super.startDate,
@@ -185,7 +185,8 @@ class Daily extends Schedule {
     super.endDate,
   }) {
     if (frequency < 1) {
-      throw AssertionError('Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(frequency, 'frequency',
+          'Frequency must be greater than or equal to 1');
     }
   }
 
@@ -296,7 +297,7 @@ class Daily extends Schedule {
 
 /// Represents a schedule that occurs every _n_ weeks on the given [weekdays].
 ///
-/// Throws an [AssertionError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if the frequency is less than 1.
 class Weekly extends Schedule {
   Weekly({
     required super.startDate,
@@ -305,11 +306,13 @@ class Weekly extends Schedule {
     super.endDate,
   }) {
     if (frequency < 1) {
-      throw AssertionError('Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(frequency, 'frequency',
+          'Frequency must be greater than or equal to 1');
     }
 
     if (weekdays.isEmpty) {
-      throw AssertionError('Weekdays list cannot be empty');
+      throw ArgumentError.value(
+          weekdays, 'weekdays', 'Weekdays list cannot be empty');
     }
 
     if (weekdays.any((weekday) => weekday < 1 || weekday > 7)) {
@@ -497,7 +500,7 @@ class Weekly extends Schedule {
 
 /// Represents a schedule that occurs every _n_ months on the given [days].
 ///
-/// Throws an [AssertionError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if the frequency is less than 1.
 class Monthly extends Schedule {
   Monthly({
     required super.startDate,
@@ -506,11 +509,12 @@ class Monthly extends Schedule {
     required this.frequency,
   }) {
     if (frequency < 1) {
-      throw AssertionError('Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(frequency, 'frequency',
+          'Frequency must be greater than or equal to 1');
     }
 
     if (days.isEmpty) {
-      throw AssertionError('Days list cannot be empty');
+      throw ArgumentError.value(days, 'days', 'Days list cannot be empty');
     }
 
     if (days.any((day) => day < 1 || day > 31)) {
@@ -699,7 +703,7 @@ class Monthly extends Schedule {
 ///
 /// This schedule occurs on the same day and month as the [startDate].
 ///
-/// Throws an [AssertionError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if the frequency is less than 1.
 class Yearly extends Schedule {
   Yearly({
     required super.startDate,
@@ -707,7 +711,8 @@ class Yearly extends Schedule {
     required this.frequency,
   }) {
     if (frequency < 1) {
-      throw AssertionError('Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(frequency, 'frequency',
+          'Frequency must be greater than or equal to 1');
     }
   }
 
