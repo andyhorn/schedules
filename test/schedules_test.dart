@@ -1020,6 +1020,119 @@ void main() {
           expect(occurrences, isEmpty);
         });
       });
+
+      group('#getNextNOccurrences', () {
+        test('returns correct dates', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2021, 01, 01),
+            DateTime(2022, 01, 01),
+          ]);
+        });
+
+        test('returns correct dates with frequency', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 2,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01),
+            DateTime(2024, 01, 01),
+          ]);
+        });
+
+        test('respects endDate', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            endDate: DateTime(2024, 01, 01),
+            frequency: 2,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(5).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01),
+            DateTime(2024, 01, 01),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 2,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(3, from: DateTime(2021, 06, 15))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2022, 01, 01),
+            DateTime(2024, 01, 01),
+            DateTime(2026, 01, 01),
+          ]);
+        });
+
+        test('handles leap years correctly', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2024, 02, 29),
+            DateTime(2028, 02, 29),
+            DateTime(2032, 02, 29),
+          ]);
+        });
+
+        test('handles leap years correctly with frequency other than 1', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 2,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2024, 02, 29),
+            DateTime(2028, 02, 29),
+            DateTime(2032, 02, 29),
+          ]);
+        });
+
+        test('handles leap years correctly with odd frequency', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 3,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2032, 02, 29),
+            DateTime(2044, 02, 29),
+            DateTime(2056, 02, 29),
+          ]);
+        });
+      });
     });
   });
 
@@ -1038,121 +1151,6 @@ void main() {
 
       expect(listDates.length, 18);
       expect(listDates.last, DateTime.parse('2024-09-17 00:00:00.000'));
-    });
-  });
-
-  group('getNextNOccurrences', () {
-    group('Yearly', () {
-      test('returns correct dates', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2021, 01, 01),
-          DateTime(2022, 01, 01),
-        ]);
-      });
-
-      test('returns correct dates with frequency', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 2,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2022, 01, 01),
-          DateTime(2024, 01, 01),
-        ]);
-      });
-
-      test('respects endDate', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          endDate: DateTime(2024, 01, 01),
-          frequency: 2,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(5).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2022, 01, 01),
-          DateTime(2024, 01, 01),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 2,
-        );
-
-        final occurrences = schedule
-            .getNextNOccurrences(3, from: DateTime(2021, 06, 15))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2022, 01, 01),
-          DateTime(2024, 01, 01),
-          DateTime(2026, 01, 01),
-        ]);
-      });
-
-      test('handles leap years correctly', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(4).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2024, 02, 29),
-          DateTime(2028, 02, 29),
-          DateTime(2032, 02, 29),
-        ]);
-      });
-
-      test('handles leap years correctly with frequency other than 1', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 2,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(4).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2024, 02, 29),
-          DateTime(2028, 02, 29),
-          DateTime(2032, 02, 29),
-        ]);
-      });
-
-      test('handles leap years correctly with odd frequency', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 3,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(4).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2032, 02, 29),
-          DateTime(2044, 02, 29),
-          DateTime(2056, 02, 29),
-        ]);
-      });
     });
   });
 }
