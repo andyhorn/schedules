@@ -29,6 +29,9 @@ sealed class Schedule {
   /// Returns an iterable of the next [n] occurrences for this schedule.
   Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from});
 
+  /// Returns an iterable of the occurrences for this schedule until the given [end] date.
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from});
+
   /// Returns a list of the next [n] dates for this schedule.
   List<DateTime> findNextNOccurrences(
     int n, {
@@ -129,6 +132,19 @@ class Singular extends Schedule {
 
     return [startDate];
   }
+
+  @override
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) {
+    final date = from ?? startDate;
+    final isAfterStartDate = date.isLaterDateThan(startDate);
+    final isAfterEndDate = date.isLaterDateThan(end);
+
+    if (isAfterStartDate || isAfterEndDate) {
+      return const [];
+    }
+
+    return [date.startOfDay()];
+  }
 }
 
 /// Represents a schedule that occurs every _n_ days.
@@ -169,6 +185,35 @@ class Daily extends Schedule {
 
       yield currentDate;
 
+      currentDate = currentDate.add(Duration(days: frequency));
+    }
+  }
+
+  @override
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+    var currentDate = (from ?? startDate).startOfDay();
+    currentDate = _getFirstValidDate(currentDate).startOfDay();
+
+    bool isBeyondEndDates(DateTime date) {
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      if (date.isLaterDateThan(end)) {
+        return true;
+      }
+
+      return false;
+    }
+
+    while (true) {
+      if (isBeyondEndDates(currentDate)) {
+        return;
+      }
+
+      yield currentDate;
       currentDate = currentDate.add(Duration(days: frequency));
     }
   }
@@ -247,6 +292,52 @@ class Weekly extends Schedule {
         if (occurrencesFound == n) {
           return;
         }
+      }
+
+      currentWeek = currentWeek.add(Duration(days: frequency * 7));
+    }
+  }
+
+  @override
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+    final sortedWeekdays = weekdays.toList()..sort();
+
+    var currentWeek = _clampToBounds(from).startOfDay();
+    currentWeek = _getFirstValidWeek(currentWeek).startOfDay();
+
+    final firstValidDay = _getFirstValidDay(currentWeek, sortedWeekdays);
+
+    bool isBeyondEndDates(DateTime date) {
+      if (date.isLaterDateThan(end)) {
+        return true;
+      }
+
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool isBeforeFirstValidDate(DateTime date) {
+      return date.isEarlierDateThan(firstValidDay);
+    }
+
+    while (true) {
+      for (final weekday in sortedWeekdays) {
+        final date = currentWeek.withWeekday(weekday);
+
+        if (isBeforeFirstValidDate(date)) {
+          continue;
+        }
+
+        if (isBeyondEndDates(date)) {
+          return;
+        }
+
+        yield date;
       }
 
       currentWeek = currentWeek.add(Duration(days: frequency * 7));
@@ -387,6 +478,58 @@ class Monthly extends Schedule {
       currentMonth = currentMonth.addMonths(frequency, overflow: false);
     }
   }
+
+  @override
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+    final sortedDays = days.toList()..sort();
+    final firstValidDay = _getFirstValidDate(_clampToBounds(from));
+
+    var currentMonth = firstValidDay.startOfMonth();
+
+    bool isBeyondEndDates(DateTime date) {
+      if (date.isLaterDateThan(end)) {
+        return true;
+      }
+
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool isBeforeFirstValidDate(DateTime date) {
+      return date.isEarlierDateThan(firstValidDay);
+    }
+
+    while (true) {
+      final lastDayOfMonth = currentMonth.endOfMonth().day;
+
+      for (final day in sortedDays) {
+        final isBeyondLastDay = day > lastDayOfMonth;
+
+        if (isBeyondLastDay) {
+          continue;
+        }
+
+        final date = currentMonth.withDay(day);
+
+        if (isBeforeFirstValidDate(date)) {
+          continue;
+        }
+
+        if (isBeyondEndDates(date)) {
+          return;
+        }
+
+        yield date;
+      }
+
+      currentMonth = currentMonth.addMonths(frequency, overflow: false);
+    }
+  }
 }
 
 /// Represents a schedule that occurs every _n_ years.
@@ -440,6 +583,48 @@ class Yearly extends Schedule {
 
         if (lcm == 0) {
           break;
+        }
+
+        currentDate = currentDate.addYears(lcm, overflow: false);
+      } else {
+        currentDate = currentDate.addYears(frequency, overflow: false);
+      }
+    }
+  }
+
+  @override
+  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+    var currentDate = _clampToBounds(from).startOfDay();
+    currentDate = _getNextValidDay(from ?? startDate);
+
+    final isLeapYear = currentDate.month == 2 && currentDate.day == 29;
+
+    bool isBeyondEndDates(DateTime date) {
+      if (date.isLaterDateThan(end)) {
+        return true;
+      }
+
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    while (true) {
+      if (isBeyondEndDates(currentDate)) {
+        return;
+      }
+
+      yield currentDate;
+
+      if (isLeapYear) {
+        final lcm = getLCM([frequency, 4]);
+
+        if (lcm == 0) {
+          return;
         }
 
         currentDate = currentDate.addYears(lcm, overflow: false);
