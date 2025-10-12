@@ -1488,6 +1488,7 @@ void main() {
           weekdays: [2]);
 
       List<DateTime> listDates =
+          // ignore: deprecated_member_use_from_same_package
           schedule.findNextNOccurrences(33, fromDate: schedule.startDate);
 
       expect(listDates.length, 18);
