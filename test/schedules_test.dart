@@ -659,6 +659,141 @@ void main() {
           expect(schedule.occursOn(DateTime(2026, 01, 01)), isFalse);
         });
       });
+
+      group('#getOccurrencesUntil', () {
+        test('returns correct occurrences until end date', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 01)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2021, 01, 01),
+            DateTime(2022, 01, 01),
+            DateTime(2023, 01, 01), // Included because it's the end date
+          ]);
+        });
+
+        test('respects endDate constraint', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            endDate: DateTime(2022, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2025, 01, 01)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2021, 01, 01),
+            DateTime(2022, 01, 01),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 2,
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2026, 01, 01),
+                  from: DateTime(2021, 06, 15))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2022, 01, 01),
+            DateTime(2024, 01, 01),
+            DateTime(2026, 01, 01), // Included because it's the end date
+          ]);
+        });
+
+        test('handles frequency correctly', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 2,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2028, 01, 01)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01),
+            DateTime(2024, 01, 01),
+            DateTime(2026, 01, 01),
+            DateTime(2028, 01, 01), // Included because it's the end date
+          ]);
+        });
+
+        test('handles leap years correctly', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2032, 02, 29)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2024, 02, 29),
+            DateTime(2028, 02, 29),
+            DateTime(2032, 02, 29), // Included because it's the end date
+          ]);
+        });
+
+        test('handles leap years correctly with frequency other than 1', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 2,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2032, 02, 29)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2024, 02, 29),
+            DateTime(2028, 02, 29),
+            DateTime(2032, 02, 29), // Included because it's the end date
+          ]);
+        });
+
+        test('handles leap years correctly with odd frequency', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 02, 29),
+            frequency: 3,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2056, 02, 29)).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 02, 29),
+            DateTime(2032, 02, 29),
+            DateTime(2044, 02, 29),
+            DateTime(2056, 02, 29), // Included because it's the end date
+          ]);
+        });
+
+        test('returns empty if end date is before start date', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
+
+          expect(occurrences, isEmpty);
+        });
+      });
     });
   });
 
@@ -1015,143 +1150,6 @@ void main() {
           DateTime(2044, 02, 29),
           DateTime(2056, 02, 29),
         ]);
-      });
-    });
-  });
-
-  group('getOccurrencesUntil', () {
-    group('Yearly', () {
-      test('returns correct occurrences until end date', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 01)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2021, 01, 01),
-          DateTime(2022, 01, 01),
-          DateTime(2023, 01, 01), // Included because it's the end date
-        ]);
-      });
-
-      test('respects endDate constraint', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          endDate: DateTime(2022, 01, 01),
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2025, 01, 01)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2021, 01, 01),
-          DateTime(2022, 01, 01),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 2,
-        );
-
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2026, 01, 01),
-                from: DateTime(2021, 06, 15))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2022, 01, 01),
-          DateTime(2024, 01, 01),
-          DateTime(2026, 01, 01), // Included because it's the end date
-        ]);
-      });
-
-      test('handles frequency correctly', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 01, 01),
-          frequency: 2,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2028, 01, 01)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 01, 01),
-          DateTime(2022, 01, 01),
-          DateTime(2024, 01, 01),
-          DateTime(2026, 01, 01),
-          DateTime(2028, 01, 01), // Included because it's the end date
-        ]);
-      });
-
-      test('handles leap years correctly', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2032, 02, 29)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2024, 02, 29),
-          DateTime(2028, 02, 29),
-          DateTime(2032, 02, 29), // Included because it's the end date
-        ]);
-      });
-
-      test('handles leap years correctly with frequency other than 1', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 2,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2032, 02, 29)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2024, 02, 29),
-          DateTime(2028, 02, 29),
-          DateTime(2032, 02, 29), // Included because it's the end date
-        ]);
-      });
-
-      test('handles leap years correctly with odd frequency', () {
-        final schedule = Yearly(
-          startDate: DateTime(2020, 02, 29),
-          frequency: 3,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2056, 02, 29)).toList();
-
-        expect(occurrences, [
-          DateTime(2020, 02, 29),
-          DateTime(2032, 02, 29),
-          DateTime(2044, 02, 29),
-          DateTime(2056, 02, 29), // Included because it's the end date
-        ]);
-      });
-
-      test('returns empty if end date is before start date', () {
-        final schedule = Yearly(
-          startDate: DateTime(2023, 01, 01),
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
-
-        expect(occurrences, isEmpty);
       });
     });
   });
