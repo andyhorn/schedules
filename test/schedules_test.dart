@@ -284,6 +284,113 @@ void main() {
           expect(schedule.occursOn(DateTime(2023, 02, 06)), isFalse);
         });
       });
+
+      group('#getOccurrencesUntil', () {
+        test('returns correct occurrences until end date', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 20)).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02), // Monday
+            DateTime(2023, 01, 06), // Friday
+            DateTime(2023, 01, 09), // Monday
+            DateTime(2023, 01, 13), // Friday
+            DateTime(2023, 01, 16), // Monday
+            DateTime(
+                2023, 01, 20), // Friday (included because it's the end date)
+          ]);
+        });
+
+        test('respects endDate constraint', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 01, 10),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 20)).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 09),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 20),
+                  from: DateTime(2023, 01, 03))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 06), // Friday
+            DateTime(2023, 01, 09), // Monday
+            DateTime(2023, 01, 13), // Friday
+            DateTime(2023, 01, 16), // Monday
+            DateTime(
+                2023, 01, 20), // Friday (included because it's the end date)
+          ]);
+        });
+
+        test('handles frequency correctly', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 2,
+            weekdays: [DateTime.monday],
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 30)).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 09), // Monday week 2
+            DateTime(2023, 01, 23), // Monday week 4
+          ]);
+        });
+
+        test('returns empty if end date is before start date', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns empty if from date is after schedule end date', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 01, 05),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 20),
+                  from: DateTime(2023, 01, 06))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+      });
     });
 
     group(Monthly, () {
@@ -790,111 +897,6 @@ void main() {
   });
 
   group('getOccurrencesUntil', () {
-    group('Weekly', () {
-      test('returns correct occurrences until end date', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01), // Sunday
-          frequency: 1,
-          weekdays: [DateTime.monday, DateTime.friday],
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 20)).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 02), // Monday
-          DateTime(2023, 01, 06), // Friday
-          DateTime(2023, 01, 09), // Monday
-          DateTime(2023, 01, 13), // Friday
-          DateTime(2023, 01, 16), // Monday
-          DateTime(2023, 01, 20), // Friday (included because it's the end date)
-        ]);
-      });
-
-      test('respects endDate constraint', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 01, 10),
-          frequency: 1,
-          weekdays: [DateTime.monday],
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 20)).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 02),
-          DateTime(2023, 01, 09),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01), // Sunday
-          frequency: 1,
-          weekdays: [DateTime.monday, DateTime.friday],
-        );
-
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 20),
-                from: DateTime(2023, 01, 03))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 06), // Friday
-          DateTime(2023, 01, 09), // Monday
-          DateTime(2023, 01, 13), // Friday
-          DateTime(2023, 01, 16), // Monday
-          DateTime(2023, 01, 20), // Friday (included because it's the end date)
-        ]);
-      });
-
-      test('handles frequency correctly', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01), // Sunday
-          frequency: 2,
-          weekdays: [DateTime.monday],
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 30)).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 09), // Monday week 2
-          DateTime(2023, 01, 23), // Monday week 4
-        ]);
-      });
-
-      test('returns empty if end date is before start date', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01),
-          frequency: 1,
-          weekdays: [DateTime.monday],
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
-
-        expect(occurrences, isEmpty);
-      });
-
-      test('returns empty if from date is after schedule end date', () {
-        final schedule = Weekly(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 01, 05),
-          frequency: 1,
-          weekdays: [DateTime.monday],
-        );
-
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 20),
-                from: DateTime(2023, 01, 06))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-    });
-
     group('Monthly', () {
       test('returns correct occurrences until end date', () {
         final schedule = Monthly(
