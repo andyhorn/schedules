@@ -289,6 +289,18 @@ class Weekly extends Schedule {
     if (frequency < 1) {
       throw AssertionError('Frequency must be greater than or equal to 1');
     }
+
+    if (weekdays.isEmpty) {
+      throw AssertionError('Weekdays list cannot be empty');
+    }
+
+    if (weekdays.any((weekday) => weekday < 1 || weekday > 7)) {
+      throw ArgumentError.value(
+        weekdays,
+        'weekdays',
+        'Weekday must be between 1 and 7',
+      );
+    }
   }
 
   /// The frequency at which this schedule occurs.
@@ -471,6 +483,14 @@ class Monthly extends Schedule {
   }) {
     if (frequency < 1) {
       throw AssertionError('Frequency must be greater than or equal to 1');
+    }
+
+    if (days.isEmpty) {
+      throw AssertionError('Days list cannot be empty');
+    }
+
+    if (days.any((day) => day < 1 || day > 31)) {
+      throw ArgumentError.value(days, 'days', 'Day must be between 1 and 31');
     }
   }
 
