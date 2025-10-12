@@ -20,6 +20,55 @@ void main() {
           expect(schedule.occursOn(DateTime(2023, 01, 02)), isFalse);
         });
       });
+
+      group('#getOccurrencesUntil', () {
+        test('returns the single occurrence if within range', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
+
+          expect(occurrences, [DateTime(2023, 01, 01)]);
+        });
+
+        test('returns empty if end date is before start date', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns empty if from date is after start date', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 10),
+                  from: DateTime(2023, 01, 02))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns the single occurrence if from date is before start date',
+            () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 10),
+                  from: DateTime(2022, 12, 31))
+              .toList();
+
+          expect(occurrences, [DateTime(2022, 12, 31)]);
+        });
+
+        test('returns empty if from date is after end date', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 10),
+                  from: DateTime(2023, 01, 15))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+      });
     });
 
     group(Daily, () {
@@ -656,55 +705,6 @@ void main() {
   });
 
   group('getOccurrencesUntil', () {
-    group('Singular', () {
-      test('returns the single occurrence if within range', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
-
-        expect(occurrences, [DateTime(2023, 01, 01)]);
-      });
-
-      test('returns empty if end date is before start date', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
-
-        expect(occurrences, isEmpty);
-      });
-
-      test('returns empty if from date is after start date', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 10),
-                from: DateTime(2023, 01, 02))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-
-      test('returns the single occurrence if from date is before start date',
-          () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 10),
-                from: DateTime(2022, 12, 31))
-            .toList();
-
-        expect(occurrences, [DateTime(2022, 12, 31)]);
-      });
-
-      test('returns empty if from date is after end date', () {
-        final schedule = Singular(date: DateTime(2023, 01, 01));
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 10),
-                from: DateTime(2023, 01, 15))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-    });
-
     group('Daily', () {
       test('returns correct occurrences until end date', () {
         final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
