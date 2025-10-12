@@ -186,8 +186,11 @@ class Daily extends Schedule {
     super.endDate,
   }) {
     if (frequency < 1) {
-      throw ArgumentError.value(frequency, 'frequency',
-          'Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
     }
   }
 
@@ -310,13 +313,19 @@ class Weekly extends Schedule {
     super.endDate,
   }) {
     if (frequency < 1) {
-      throw ArgumentError.value(frequency, 'frequency',
-          'Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
     }
 
     if (weekdays.isEmpty) {
       throw ArgumentError.value(
-          weekdays, 'weekdays', 'Weekdays list cannot be empty');
+        weekdays,
+        'weekdays',
+        'Weekdays list cannot be empty',
+      );
     }
 
     if (weekdays.any((weekday) => weekday < 1 || weekday > 7)) {
@@ -516,8 +525,11 @@ class Monthly extends Schedule {
     required this.frequency,
   }) {
     if (frequency < 1) {
-      throw ArgumentError.value(frequency, 'frequency',
-          'Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
     }
 
     if (days.isEmpty) {
@@ -719,8 +731,11 @@ class Yearly extends Schedule {
     required this.frequency,
   }) {
     if (frequency < 1) {
-      throw ArgumentError.value(frequency, 'frequency',
-          'Frequency must be greater than or equal to 1');
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
     }
   }
 
