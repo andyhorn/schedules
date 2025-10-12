@@ -1810,7 +1810,7 @@ void main() {
       final occurrences =
           schedule.getOccurrencesUntil(DateTime(2023, 7, 1)).toList();
       expect(occurrences.length,
-          equals(10)); // 3 months * 3 days + 1 (including end date)
+          equals(10)); // Jan, Mar, May, Jul: each has 1st and 15th, Jan/Mar/May have 31st, Jul only 1st (end date). So: Jan(3), Mar(3), May(3), Jul(1) = 10.
       expect(occurrences[0], equals(DateTime(2023, 1, 1)));
       expect(occurrences[1], equals(DateTime(2023, 1, 15)));
       expect(occurrences[2], equals(DateTime(2023, 1, 31)));
