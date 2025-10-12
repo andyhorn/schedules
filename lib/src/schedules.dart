@@ -171,7 +171,7 @@ class Singular extends Schedule {
       return const [];
     }
 
-    return [date.startOfDay()];
+    return [startDate.startOfDay()];
   }
 }
 

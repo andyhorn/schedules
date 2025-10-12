@@ -56,7 +56,7 @@ void main() {
                   from: DateTime(2022, 12, 31))
               .toList();
 
-          expect(occurrences, [DateTime(2022, 12, 31)]);
+          expect(occurrences, [DateTime(2023, 01, 01)]);
         });
 
         test('returns empty if from date is after end date', () {
