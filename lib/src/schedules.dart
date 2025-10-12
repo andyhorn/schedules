@@ -177,7 +177,8 @@ class Singular extends Schedule {
 
 /// Represents a schedule that occurs every _n_ days.
 ///
-/// Throws an [ArgumentError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if:
+/// - [frequency] is less than 1
 class Daily extends Schedule {
   Daily({
     required super.startDate,
@@ -297,7 +298,10 @@ class Daily extends Schedule {
 
 /// Represents a schedule that occurs every _n_ weeks on the given [weekdays].
 ///
-/// Throws an [ArgumentError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if:
+/// - [frequency] is less than 1
+/// - [weekdays] is empty
+/// - any weekday in [weekdays] is not between 1 and 7 (inclusive)
 class Weekly extends Schedule {
   Weekly({
     required super.startDate,
@@ -500,7 +504,10 @@ class Weekly extends Schedule {
 
 /// Represents a schedule that occurs every _n_ months on the given [days].
 ///
-/// Throws an [ArgumentError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if:
+/// - [frequency] is less than 1
+/// - [days] is empty
+/// - any day in [days] is not between 1 and 31 (inclusive)
 class Monthly extends Schedule {
   Monthly({
     required super.startDate,
@@ -703,7 +710,8 @@ class Monthly extends Schedule {
 ///
 /// This schedule occurs on the same day and month as the [startDate].
 ///
-/// Throws an [ArgumentError] if the frequency is less than 1.
+/// Throws an [ArgumentError] if:
+/// - [frequency] is less than 1
 class Yearly extends Schedule {
   Yearly({
     required super.startDate,
