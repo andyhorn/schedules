@@ -37,7 +37,7 @@ sealed class Schedule {
   /// Returns a list of the next [n] dates for this schedule.
   @Deprecated(
     'Use [getNextNOccurrences] instead, which returns an Iterable.'
-    'This method will be removed in a future version.',
+    ' This method will be removed in a future version.',
   )
   List<DateTime> findNextNOccurrences(
     int n, {
@@ -68,7 +68,7 @@ sealed class Schedule {
   /// Returns a list of dates active on the current schedule through [tillDate].
   @Deprecated(
     'Use [getOccurrencesUntil] instead, which returns an Iterable.'
-    'This method will be removed in a future version.',
+    ' This method will be removed in a future version.',
   )
   List<DateTime> findNextTillDateOccurrences(
     DateTime tillDate, {
