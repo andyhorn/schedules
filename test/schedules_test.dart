@@ -68,6 +68,24 @@ void main() {
 
           expect(occurrences, isEmpty);
         });
+
+        test('returns empty if the occurrence is excluded', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2023, 01, 10),
+              exclude: [DateTime(2023, 01, 01)]).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns the occurrence if it is not excluded', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2023, 01, 10),
+              exclude: [DateTime(2023, 01, 02)]).toList();
+
+          expect(occurrences, [DateTime(2023, 01, 01)]);
+        });
       });
 
       group('#getNextNOccurrences', () {
@@ -85,6 +103,22 @@ void main() {
               .toList();
 
           expect(occurrences, isEmpty);
+        });
+
+        test('returns empty if the occurrence is excluded', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule.getNextNOccurrences(1,
+              exclude: [DateTime(2023, 01, 01)]).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns the occurrence if it is not excluded', () {
+          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final occurrences = schedule.getNextNOccurrences(1,
+              exclude: [DateTime(2023, 01, 02)]).toList();
+
+          expect(occurrences, [DateTime(2023, 01, 01)]);
         });
       });
     });
@@ -220,6 +254,40 @@ void main() {
 
           expect(occurrences, isEmpty);
         });
+
+        test('excludes specified dates from results', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2023, 01, 10),
+              exclude: [DateTime(2023, 01, 03)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 05), // 03 is excluded
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 09),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 08), exclude: [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 04),
+            DateTime(2023, 01, 06),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 03), // 02, 04, 06 are excluded
+            DateTime(2023, 01, 05),
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 08),
+          ]);
+        });
       });
 
       group('#getNextNOccurrences', () {
@@ -263,6 +331,36 @@ void main() {
             DateTime(2023, 01, 04),
             DateTime(2023, 01, 07),
             DateTime(2023, 01, 10),
+          ]);
+        });
+
+        test('excludes specified dates from results', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final occurrences = schedule.getNextNOccurrences(5,
+              exclude: [DateTime(2023, 01, 03)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 05), // 03 is excluded
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 09),
+            DateTime(2023, 01, 11),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final occurrences = schedule.getNextNOccurrences(3, exclude: [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 04),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 03), // 02 and 04 are excluded
+            DateTime(2023, 01, 05),
           ]);
         });
       });
@@ -453,6 +551,47 @@ void main() {
 
           expect(occurrences, isEmpty);
         });
+
+        test('excludes specified dates from results', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2023, 01, 20),
+              exclude: [DateTime(2023, 01, 09)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 06),
+            DateTime(2023, 01, 13), // 09 is excluded
+            DateTime(2023, 01, 16),
+            DateTime(2023, 01, 20),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 20), exclude: [
+            DateTime(2023, 01, 06),
+            DateTime(2023, 01, 13),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 09), // 06 and 13 are excluded
+            DateTime(2023, 01, 16),
+            DateTime(2023, 01, 20),
+          ]);
+        });
       });
 
       group('#getNextNOccurrences', () {
@@ -505,6 +644,47 @@ void main() {
             DateTime(2023, 01, 09),
             DateTime(2023, 01, 13),
             DateTime(2023, 01, 16),
+          ]);
+        });
+
+        test('excludes specified dates from results', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences = schedule.getNextNOccurrences(5,
+              exclude: [DateTime(2023, 01, 09)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 06),
+            DateTime(2023, 01, 13), // 09 is excluded
+            DateTime(2023, 01, 16),
+            DateTime(2023, 01, 20),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            frequency: 1,
+            weekdays: [DateTime.monday, DateTime.friday],
+          );
+
+          final occurrences = schedule.getNextNOccurrences(6, exclude: [
+            DateTime(2023, 01, 06),
+            DateTime(2023, 01, 13),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 09), // 06 and 13 are excluded
+            DateTime(2023, 01, 16),
+            DateTime(2023, 01, 20),
+            DateTime(2023, 01, 23),
+            DateTime(2023, 01, 27),
           ]);
         });
       });
@@ -711,6 +891,49 @@ void main() {
 
           expect(occurrences, isEmpty);
         });
+
+        test('excludes specified dates from results', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2023, 03, 20),
+              exclude: [DateTime(2023, 01, 15)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 02, 01), // 01/15 is excluded
+            DateTime(2023, 02, 15),
+            DateTime(2023, 03, 01),
+            DateTime(2023, 03, 15),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 04, 20), exclude: [
+            DateTime(2023, 01, 15),
+            DateTime(2023, 02, 01),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 02, 15), // 01/15 and 02/01 are excluded
+            DateTime(2023, 03, 01),
+            DateTime(2023, 03, 15),
+            DateTime(2023, 04, 01),
+            DateTime(2023, 04, 15),
+          ]);
+        });
       });
 
       group('#getNextNOccurrences', () {
@@ -818,6 +1041,47 @@ void main() {
             DateTime(2023, 01, 31),
             DateTime(2023, 03, 31),
             DateTime(2023, 05, 31),
+          ]);
+        });
+
+        test('excludes specified dates from results', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(5,
+              exclude: [DateTime(2023, 01, 15)]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 02, 01), // 01/15 is excluded
+            DateTime(2023, 02, 15),
+            DateTime(2023, 03, 01),
+            DateTime(2023, 03, 15),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 01, 01),
+            days: [1, 15],
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(6, exclude: [
+            DateTime(2023, 01, 15),
+            DateTime(2023, 02, 01),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 02, 15), // 01/15 and 02/01 are excluded
+            DateTime(2023, 03, 01),
+            DateTime(2023, 03, 15),
+            DateTime(2023, 04, 01),
+            DateTime(2023, 04, 15),
           ]);
         });
       });
@@ -1019,6 +1283,46 @@ void main() {
 
           expect(occurrences, isEmpty);
         });
+
+        test('excludes specified dates from results', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getOccurrencesUntil(
+              DateTime(2025, 01, 01),
+              exclude: [DateTime(2021, 01, 01)]).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01), // 2021 is excluded
+            DateTime(2023, 01, 01),
+            DateTime(2024, 01, 01),
+            DateTime(2025, 01, 01),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2026, 01, 01), exclude: [
+            DateTime(2021, 01, 01),
+            DateTime(2023, 01, 01),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01), // 2021 and 2023 are excluded
+            DateTime(2024, 01, 01),
+            DateTime(2025, 01, 01),
+            DateTime(2026, 01, 01),
+          ]);
+        });
       });
 
       group('#getNextNOccurrences', () {
@@ -1130,6 +1434,43 @@ void main() {
             DateTime(2032, 02, 29),
             DateTime(2044, 02, 29),
             DateTime(2056, 02, 29),
+          ]);
+        });
+
+        test('excludes specified dates from results', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4,
+              exclude: [DateTime(2021, 01, 01)]).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01), // 2021 is excluded
+            DateTime(2023, 01, 01),
+            DateTime(2024, 01, 01),
+          ]);
+        });
+
+        test('excludes multiple specified dates from results', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 01, 01),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(5, exclude: [
+            DateTime(2021, 01, 01),
+            DateTime(2023, 01, 01),
+          ]).toList();
+
+          expect(occurrences, [
+            DateTime(2020, 01, 01),
+            DateTime(2022, 01, 01), // 2021 and 2023 are excluded
+            DateTime(2024, 01, 01),
+            DateTime(2025, 01, 01),
+            DateTime(2026, 01, 01),
           ]);
         });
       });

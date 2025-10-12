@@ -27,10 +27,12 @@ sealed class Schedule {
   bool occursOn(DateTime date);
 
   /// Returns an iterable of the next [n] occurrences for this schedule.
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from});
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude});
 
   /// Returns an iterable of the occurrences for this schedule until the given [end] date.
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from});
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude});
 
   /// Returns a list of the next [n] dates for this schedule.
   @Deprecated(
@@ -133,21 +135,27 @@ class Singular extends Schedule {
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) {
-    if (from != null && from.isLaterDateThan(startDate)) {
-      return const <DateTime>[];
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude}) {
+    final isAfterStartDate = from != null && from.isLaterDateThan(startDate);
+    final isExcluded = exclude?.any(startDate.isSameDateAs) ?? false;
+
+    if (isAfterStartDate || isExcluded) {
+      return const [];
     }
 
-    return [startDate];
+    return [startDate.startOfDay()];
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) {
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude}) {
     final date = from ?? startDate;
     final isAfterStartDate = date.isLaterDateThan(startDate);
     final isAfterEndDate = date.isLaterDateThan(end);
+    final isExcluded = exclude?.any(date.isSameDateAs) ?? false;
 
-    if (isAfterStartDate || isAfterEndDate) {
+    if (isAfterStartDate || isAfterEndDate || isExcluded) {
       return const [];
     }
 
@@ -185,26 +193,44 @@ class Daily extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
-    // Generate the next n occurrences
-    for (var i = 0; i < n; i++) {
+    bool isBeyondEndDate(DateTime date) {
       if (endDate case final endDate?) {
-        if (currentDate.isLaterDateThan(endDate)) {
-          break;
+        if (date.isLaterDateThan(endDate)) {
+          return true;
         }
       }
 
-      yield currentDate;
+      return false;
+    }
+
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
+    // Generate the next n occurrences
+    var occurrencesFound = 0;
+    while (occurrencesFound < n) {
+      if (isBeyondEndDate(currentDate)) {
+        return;
+      }
+
+      if (!isExcluded(currentDate)) {
+        yield currentDate;
+        occurrencesFound++;
+      }
 
       currentDate = currentDate.add(Duration(days: frequency));
     }
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     var currentDate = (from ?? startDate).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
@@ -222,12 +248,19 @@ class Daily extends Schedule {
       return false;
     }
 
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
     while (true) {
       if (isBeyondEndDates(currentDate)) {
         return;
       }
 
-      yield currentDate;
+      if (!isExcluded(currentDate)) {
+        yield currentDate;
+      }
+
       currentDate = currentDate.add(Duration(days: frequency));
     }
   }
@@ -282,7 +315,8 @@ class Weekly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     final sortedWeekdays = weekdays.toList()..sort();
 
     var currentWeek = _clampToBounds(from).startOfDay();
@@ -290,20 +324,39 @@ class Weekly extends Schedule {
 
     final firstValidDay = _getFirstValidDay(currentWeek, sortedWeekdays);
 
+    bool isBeyondEndDate(DateTime date) {
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool isBeforeFirstValidDay(DateTime date) {
+      return date.isEarlierDateThan(firstValidDay);
+    }
+
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
       for (final weekday in weekdays) {
         final date = currentWeek.withWeekday(weekday);
-        final isBeforeFirstValidDay = date.isEarlierDateThan(firstValidDay);
 
-        if (isBeforeFirstValidDay) {
+        if (isBeyondEndDate(date)) {
+          return;
+        }
+
+        if (isBeforeFirstValidDay(date)) {
           continue;
         }
 
-        if (endDate case final endDate?) {
-          if (date.isLaterDateThan(endDate)) {
-            return;
-          }
+        if (isExcluded(date)) {
+          continue;
         }
 
         yield date;
@@ -319,7 +372,8 @@ class Weekly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     final sortedWeekdays = weekdays.toList()..sort();
 
     var currentWeek = _clampToBounds(from).startOfDay();
@@ -345,16 +399,24 @@ class Weekly extends Schedule {
       return date.isEarlierDateThan(firstValidDay);
     }
 
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
     while (true) {
       for (final weekday in sortedWeekdays) {
         final date = currentWeek.withWeekday(weekday);
+
+        if (isBeyondEndDates(date)) {
+          return;
+        }
 
         if (isBeforeFirstValidDate(date)) {
           continue;
         }
 
-        if (isBeyondEndDates(date)) {
-          return;
+        if (isExcluded(date)) {
+          continue;
         }
 
         yield date;
@@ -462,9 +524,24 @@ class Monthly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     final sortedDays = days.toList()..sort();
     final firstValidDay = _getFirstValidDate(_clampToBounds(from));
+
+    bool isBeyondEndDate(DateTime date) {
+      if (endDate case final endDate?) {
+        if (date.isLaterDateThan(endDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
 
     var currentMonth = firstValidDay.startOfMonth();
     var occurrencesFound = 0;
@@ -485,11 +562,12 @@ class Monthly extends Schedule {
           continue;
         }
 
-        if (endDate case final endDate?) {
-          if (date.isLaterDateThan(endDate)) {
-            // No more valid dates can be found
-            return;
-          }
+        if (isBeyondEndDate(date)) {
+          return;
+        }
+
+        if (isExcluded(date)) {
+          continue;
         }
 
         yield date;
@@ -506,7 +584,8 @@ class Monthly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     final sortedDays = days.toList()..sort();
     final firstValidDay = _getFirstValidDate(_clampToBounds(from));
 
@@ -530,6 +609,10 @@ class Monthly extends Schedule {
       return date.isEarlierDateThan(firstValidDay);
     }
 
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
     while (true) {
       final lastDayOfMonth = currentMonth.endOfMonth().day;
 
@@ -542,12 +625,16 @@ class Monthly extends Schedule {
 
         final date = currentMonth.withDay(day);
 
+        if (isBeyondEndDates(date)) {
+          return;
+        }
+
         if (isBeforeFirstValidDate(date)) {
           continue;
         }
 
-        if (isBeyondEndDates(date)) {
-          return;
+        if (isExcluded(date)) {
+          continue;
         }
 
         yield date;
@@ -593,20 +680,37 @@ class Yearly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getNextNOccurrences(int n, {DateTime? from}) sync* {
+  Iterable<DateTime> getNextNOccurrences(int n,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getNextValidDay(from ?? startDate);
 
     final isLeapYear = currentDate.month == 2 && currentDate.day == 29;
 
-    for (var i = 0; i < n; i++) {
+    bool isBeyondEndDate(DateTime date) {
       if (endDate case final endDate?) {
-        if (currentDate.isLaterDateThan(endDate)) {
-          break;
+        if (date.isLaterDateThan(endDate)) {
+          return true;
         }
       }
 
-      yield currentDate;
+      return false;
+    }
+
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
+    var occurrencesFound = 0;
+    while (occurrencesFound < n) {
+      if (isBeyondEndDate(currentDate)) {
+        return;
+      }
+
+      if (!isExcluded(currentDate)) {
+        yield currentDate;
+        occurrencesFound++;
+      }
 
       if (isLeapYear) {
         // Use math to find the next leap year that also satisfies the
@@ -625,7 +729,8 @@ class Yearly extends Schedule {
   }
 
   @override
-  Iterable<DateTime> getOccurrencesUntil(DateTime end, {DateTime? from}) sync* {
+  Iterable<DateTime> getOccurrencesUntil(DateTime end,
+      {DateTime? from, Iterable<DateTime>? exclude}) sync* {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getNextValidDay(from ?? startDate);
 
@@ -645,12 +750,18 @@ class Yearly extends Schedule {
       return false;
     }
 
+    bool isExcluded(DateTime date) {
+      return exclude?.any(date.isSameDateAs) ?? false;
+    }
+
     while (true) {
       if (isBeyondEndDates(currentDate)) {
         return;
       }
 
-      yield currentDate;
+      if (!isExcluded(currentDate)) {
+        yield currentDate;
+      }
 
       if (isLeapYear) {
         final lcm = getLCM([frequency, 4]);
