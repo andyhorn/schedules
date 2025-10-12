@@ -118,6 +118,91 @@ void main() {
           expect(schedule.occursOn(DateTime(2023, 01, 11)), isFalse);
         });
       });
+
+      group('#getOccurrencesUntil', () {
+        test('returns correct occurrences until end date', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 03),
+            DateTime(2023, 01, 05),
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 09),
+          ]);
+        });
+
+        test('respects endDate constraint', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 01, 05),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 01),
+            DateTime(2023, 01, 02),
+            DateTime(2023, 01, 03),
+            DateTime(2023, 01, 04),
+            DateTime(2023, 01, 05),
+          ]);
+        });
+
+        test('returns correct occurrences when starting mid-pattern', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 15),
+                  from: DateTime(2023, 01, 02))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 04),
+            DateTime(2023, 01, 07),
+            DateTime(2023, 01, 10),
+            DateTime(2023, 01, 13),
+          ]);
+        });
+
+        test('returns empty if end date is before start date', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns empty if from date is after end date', () {
+          final schedule =
+              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 05),
+                  from: DateTime(2023, 01, 10))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test('returns empty if from date is after schedule end date', () {
+          final schedule = Daily(
+              startDate: DateTime(2023, 01, 01),
+              frequency: 1,
+              endDate: DateTime(2023, 01, 05));
+          final occurrences = schedule
+              .getOccurrencesUntil(DateTime(2023, 01, 15),
+                  from: DateTime(2023, 01, 06))
+              .toList();
+
+          expect(occurrences, isEmpty);
+        });
+      });
     });
 
     group(Weekly, () {
@@ -705,87 +790,6 @@ void main() {
   });
 
   group('getOccurrencesUntil', () {
-    group('Daily', () {
-      test('returns correct occurrences until end date', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 03),
-          DateTime(2023, 01, 05),
-          DateTime(2023, 01, 07),
-          DateTime(2023, 01, 09),
-        ]);
-      });
-
-      test('respects endDate constraint', () {
-        final schedule = Daily(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 01, 05),
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 01),
-          DateTime(2023, 01, 02),
-          DateTime(2023, 01, 03),
-          DateTime(2023, 01, 04),
-          DateTime(2023, 01, 05),
-        ]);
-      });
-
-      test('returns correct occurrences when starting mid-pattern', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 15),
-                from: DateTime(2023, 01, 02))
-            .toList();
-
-        expect(occurrences, [
-          DateTime(2023, 01, 04),
-          DateTime(2023, 01, 07),
-          DateTime(2023, 01, 10),
-          DateTime(2023, 01, 13),
-        ]);
-      });
-
-      test('returns empty if end date is before start date', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
-
-        expect(occurrences, isEmpty);
-      });
-
-      test('returns empty if from date is after end date', () {
-        final schedule = Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 05),
-                from: DateTime(2023, 01, 10))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-
-      test('returns empty if from date is after schedule end date', () {
-        final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
-            frequency: 1,
-            endDate: DateTime(2023, 01, 05));
-        final occurrences = schedule
-            .getOccurrencesUntil(DateTime(2023, 01, 15),
-                from: DateTime(2023, 01, 06))
-            .toList();
-
-        expect(occurrences, isEmpty);
-      });
-    });
-
     group('Weekly', () {
       test('returns correct occurrences until end date', () {
         final schedule = Weekly(
