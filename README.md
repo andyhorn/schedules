@@ -631,6 +631,15 @@ if (meeting.occursOn(now) && meeting.occursAt(now.toTimeOfDay())) {
 }
 ```
 
+## Deprecated Methods
+
+The following methods are deprecated and will be removed in a future version:
+
+- `findNextNOccurrences()` - Use `getNextNOccurrences()` instead
+- `findNextTillDateOccurrences()` - Use `getOccurrencesUntil()` instead
+
+These deprecated methods return `List<DateTime>` instead of `Iterable<DateTime>` and have slightly different parameter names. The new methods provide better performance and more consistent API design.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
