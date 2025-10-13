@@ -1,4 +1,4 @@
-import 'package:schedules/src/math.dart';
+import 'package:schedules/src/utils/math.dart';
 import 'package:test/test.dart';
 
 void main() {

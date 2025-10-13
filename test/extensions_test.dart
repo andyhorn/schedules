@@ -1,4 +1,4 @@
-import 'package:schedules/src/extensions.dart';
+import 'package:schedules/src/utils/extensions.dart';
 import 'package:test/test.dart';
 
 void main() {
