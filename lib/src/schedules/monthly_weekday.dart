@@ -255,6 +255,7 @@ class MonthlyWeekday extends Schedule {
     return month.withDay(occurrence);
   }
 
+  // Get the forward-looking distance between two weekdays
   int _getDistance({
     required int a,
     required int b,
