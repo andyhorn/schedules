@@ -49,4 +49,23 @@ class TimeOfDay {
       );
     }
   }
+
+  TimeOfDay.fromDateTime(DateTime dateTime)
+      : hour = dateTime.hour,
+        minute = dateTime.minute,
+        second = dateTime.second,
+        millisecond = dateTime.millisecond;
+
+  @override
+  bool operator ==(Object other) {
+    return other is TimeOfDay &&
+        hour == other.hour &&
+        minute == other.minute &&
+        second == other.second &&
+        millisecond == other.millisecond;
+  }
+
+  @override
+  int get hashCode =>
+      hour.hashCode ^ minute.hashCode ^ second.hashCode ^ millisecond.hashCode;
 }
