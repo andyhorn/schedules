@@ -6,43 +6,14 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [weekday] is not between 1 and 7, inclusive
 /// - [weekOfMonth] is not between 1 and 5, inclusive, or -1 for the last occurrence of month
-///
-/// This schedule occurs on the first Monday of every month.
-/// ```
-/// MonthlyWeekday(
-///   startDate: DateTime(2023, 01, 01), // January 1st, 2023
-///   weekday: DateTime.monday, // Monday
-///   weekOfMonth: 1, // First occurrence of the month
-///   frequency: 1, // Every month
-/// )
-/// ```
-///
-/// This schedule occurs on the last Friday of every month.
-/// ```
-/// MonthlyWeekday(
-///   startDate: DateTime(2023, 01, 01), // January 1st, 2023
-///   weekday: DateTime.friday,
-///   weekOfMonth: -1, // Last occurrence of the month
-///   frequency: 1, // Every month
-/// )
-/// ```
-///
-/// This schedule occurs on the first Monday of every quarter.
-/// ```
-/// MonthlyWeekday(
-///   startDate: DateTime(2023, 01, 01),
-///   weekday: DateTime.monday,
-///   weekOfMonth: 1,
-///   frequency: 3, // Every 3 months
-/// )
-/// ```
 class MonthlyWeekday extends Schedule {
-  MonthlyWeekday({
+  MonthlyWeekday._internal({
     required super.startDate,
     super.endDate,
     required this.frequency,
     required this.weekday,
     required this.weekOfMonth,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -69,41 +40,56 @@ class MonthlyWeekday extends Schedule {
     }
   }
 
-  MonthlyWeekday.timed({
-    required super.startDate,
-    super.endDate,
-    required this.frequency,
-    required this.weekday,
-    required this.weekOfMonth,
-    required Iterable<TimeOfDay> timesOfDay,
-  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
-    if (frequency < 1) {
-      throw ArgumentError.value(
-        frequency,
-        'frequency',
-        'Frequency must be greater than or equal to 1',
-      );
-    }
-
-    if (weekday < 1 || weekday > 7) {
-      throw ArgumentError.value(
-        weekday,
-        'weekday',
-        'Weekday must be between 1 and 7',
-      );
-    }
-
-    if (weekOfMonth != -1 && (weekOfMonth < 1 || weekOfMonth > 5)) {
-      throw ArgumentError.value(
-        weekOfMonth,
-        'weekOfMonth',
-        'Week of month must be between 1 and 5, or -1 for last week of month',
-      );
-    }
+  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth].
+  factory MonthlyWeekday({
+    required DateTime startDate,
+    DateTime? endDate,
+    required int frequency,
+    required int weekday,
+    required int weekOfMonth,
+  }) {
+    return MonthlyWeekday._internal(
+      startDate: startDate,
+      endDate: endDate,
+      frequency: frequency,
+      weekday: weekday,
+      weekOfMonth: weekOfMonth,
+      timingMode: const UnTimed(),
+    );
   }
 
+  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth] at the given [timesOfDay].
+  factory MonthlyWeekday.timed({
+    required DateTime startDate,
+    required int frequency,
+    required int weekday,
+    required int weekOfMonth,
+    required Iterable<TimeOfDay> timesOfDay,
+    DateTime? endDate,
+  }) {
+    return MonthlyWeekday._internal(
+      startDate: startDate,
+      endDate: endDate,
+      frequency: frequency,
+      weekday: weekday,
+      weekOfMonth: weekOfMonth,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
+  }
+
+  /// The frequency at which this schedule occurs.
+  ///
+  /// For example, if this is `2`, then this schedule occurs every other month.
   final int frequency;
+
+  /// The weekday that this schedule occurs on.
+  ///
+  /// This is a integer, where 1 = Monday, 7 = Sunday.
   final int weekday;
+
+  /// The week of month that this schedule occurs on.
+  ///
+  /// This is a integer, where 1 = First week of month, 5 = Last week of month, -1 = Last week of month.
   final int weekOfMonth;
 
   @override

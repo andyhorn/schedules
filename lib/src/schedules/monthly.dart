@@ -6,12 +6,14 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [days] is empty
 /// - any day in [days] is not between 1 and 31 (inclusive)
+/// - [endDate] is before [startDate]
 class Monthly extends Schedule {
-  Monthly({
+  Monthly._internal({
     required super.startDate,
-    super.endDate,
     required this.days,
     required this.frequency,
+    super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -30,28 +32,37 @@ class Monthly extends Schedule {
     }
   }
 
-  Monthly.timed({
-    required super.startDate,
-    super.endDate,
-    required this.days,
-    required this.frequency,
+  /// Creates a monthly schedule that occurs every [frequency] months on the given [days].
+  factory Monthly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> days,
+    DateTime? endDate,
+  }) {
+    return Monthly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      days: days,
+      endDate: endDate,
+      timingMode: const UnTimed(),
+    );
+  }
+
+  /// Creates a monthly schedule that occurs every [frequency] months on the given [days] at the given [timesOfDay].
+  factory Monthly.timed({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> days,
     required Iterable<TimeOfDay> timesOfDay,
-  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
-    if (frequency < 1) {
-      throw ArgumentError.value(
-        frequency,
-        'frequency',
-        'Frequency must be greater than or equal to 1',
-      );
-    }
-
-    if (days.isEmpty) {
-      throw ArgumentError.value(days, 'days', 'Days list cannot be empty');
-    }
-
-    if (days.any((day) => day < 1 || day > 31)) {
-      throw ArgumentError.value(days, 'days', 'Day must be between 1 and 31');
-    }
+    DateTime? endDate,
+  }) {
+    return Monthly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      days: days,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The days of the month that this schedule occurs on.

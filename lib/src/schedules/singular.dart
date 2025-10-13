@@ -2,10 +2,30 @@ part of 'schedule_base.dart';
 
 /// Represents a schedule that occurs only once.
 class Singular extends Schedule {
-  Singular({
-    // renamed to be more explicit that this is a single date
+  Singular._internal({
+    required super.startDate,
+    super.timingMode,
+  });
+
+  /// Creates a singular schedule that occurs on the given [date].
+  factory Singular({
     required DateTime date,
-  }) : super(startDate: date, endDate: date);
+  }) {
+    return Singular._internal(
+      startDate: date,
+    );
+  }
+
+  /// Creates a singular schedule that occurs on the given date at the given time.
+  factory Singular.timed({
+    required DateTime date,
+    required TimeOfDay timeOfDay,
+  }) {
+    return Singular._internal(
+      startDate: date,
+      timingMode: Timed(timesOfDay: [timeOfDay]),
+    );
+  }
 
   @override
   bool occursOn(DateTime date) => startDate.isSameDateAs(date);

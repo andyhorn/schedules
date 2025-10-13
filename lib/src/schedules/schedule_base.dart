@@ -37,6 +37,16 @@ sealed class Schedule {
     this.endDate,
     this.timingMode = const UnTimed(),
   }) {
+    if (endDate case final endDate?) {
+      if (endDate.isEarlierDateThan(startDate)) {
+        throw ArgumentError.value(
+          endDate,
+          'endDate',
+          'End date must be after start date',
+        );
+      }
+    }
+
     if (timingMode case Timed(timesOfDay: final timesOfDay)) {
       if (timesOfDay.isEmpty) {
         throw ArgumentError.value(

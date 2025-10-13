@@ -4,11 +4,13 @@ part of 'schedule_base.dart';
 ///
 /// Throws an [ArgumentError] if:
 /// - [frequency] is less than 1
+/// - [endDate] is before [startDate]
 class Daily extends Schedule {
-  Daily({
+  Daily._internal({
     required super.startDate,
     required this.frequency,
     super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -19,23 +21,33 @@ class Daily extends Schedule {
     }
   }
 
-  /// Creates a daily schedule that occurs at the given [timesOfDay].
-  ///
-  /// Throws an [ArgumentError] if:
-  /// - [timesOfDay] is empty
-  Daily.timed({
-    required super.startDate,
-    required this.frequency,
+  /// Creates a daily schedule that occurs every [frequency] days.
+  factory Daily({
+    required DateTime startDate,
+    required int frequency,
+    DateTime? endDate,
+  }) {
+    return Daily._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+      timingMode: const UnTimed(),
+    );
+  }
+
+  /// Creates a daily schedule that occurs every [frequency] days at the given [timesOfDay].
+  factory Daily.timed({
+    required DateTime startDate,
+    required int frequency,
     required Iterable<TimeOfDay> timesOfDay,
-    super.endDate,
-  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
-    if (frequency < 1) {
-      throw ArgumentError.value(
-        frequency,
-        'frequency',
-        'Frequency must be greater than or equal to 1',
-      );
-    }
+    DateTime? endDate,
+  }) {
+    return Daily._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The frequency at which this schedule occurs.

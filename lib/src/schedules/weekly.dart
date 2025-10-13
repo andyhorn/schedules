@@ -6,12 +6,14 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [weekdays] is empty
 /// - any weekday in [weekdays] is not between 1 and 7 (inclusive)
+/// - [endDate] is before [startDate]
 class Weekly extends Schedule {
-  Weekly({
+  Weekly._internal({
     required super.startDate,
     required this.frequency,
     required this.weekdays,
     super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -37,36 +39,37 @@ class Weekly extends Schedule {
       );
     }
   }
-  Weekly.timed({
-    required super.startDate,
-    required this.frequency,
-    required this.weekdays,
-    super.endDate,
+
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays].
+  factory Weekly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> weekdays,
+    DateTime? endDate,
+  }) {
+    return Weekly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      weekdays: weekdays,
+      endDate: endDate,
+    );
+  }
+
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays] at the given [timesOfDay].
+  factory Weekly.timed({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> weekdays,
     required Iterable<TimeOfDay> timesOfDay,
-  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
-    if (frequency < 1) {
-      throw ArgumentError.value(
-        frequency,
-        'frequency',
-        'Frequency must be greater than or equal to 1',
-      );
-    }
-
-    if (weekdays.isEmpty) {
-      throw ArgumentError.value(
-        weekdays,
-        'weekdays',
-        'Weekdays list cannot be empty',
-      );
-    }
-
-    if (weekdays.any((weekday) => weekday < 1 || weekday > 7)) {
-      throw ArgumentError.value(
-        weekdays,
-        'weekdays',
-        'Weekday must be between 1 and 7',
-      );
-    }
+    DateTime? endDate,
+  }) {
+    return Weekly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      weekdays: weekdays,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The frequency at which this schedule occurs.
