@@ -30,6 +30,30 @@ class Monthly extends Schedule {
     }
   }
 
+  Monthly.timed({
+    required super.startDate,
+    super.endDate,
+    required this.days,
+    required this.frequency,
+    required Iterable<TimeOfDay> timesOfDay,
+  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (frequency < 1) {
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
+    }
+
+    if (days.isEmpty) {
+      throw ArgumentError.value(days, 'days', 'Days list cannot be empty');
+    }
+
+    if (days.any((day) => day < 1 || day > 31)) {
+      throw ArgumentError.value(days, 'days', 'Day must be between 1 and 31');
+    }
+  }
+
   /// The days of the month that this schedule occurs on.
   ///
   /// This is a list of integers, where each integer represents a day of the month.

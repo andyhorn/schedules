@@ -21,6 +21,21 @@ class Yearly extends Schedule {
     }
   }
 
+  Yearly.timed({
+    required super.startDate,
+    super.endDate,
+    required this.frequency,
+    required Iterable<TimeOfDay> timesOfDay,
+  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (frequency < 1) {
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
+    }
+  }
+
   /// The frequency at which this schedule occurs.
   ///
   /// For example, if this is `2`, then this schedule occurs every other year.

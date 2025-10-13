@@ -19,6 +19,25 @@ class Daily extends Schedule {
     }
   }
 
+  /// Creates a daily schedule that occurs at the given [timesOfDay].
+  ///
+  /// Throws an [ArgumentError] if:
+  /// - [timesOfDay] is empty
+  Daily.timed({
+    required super.startDate,
+    required this.frequency,
+    required Iterable<TimeOfDay> timesOfDay,
+    super.endDate,
+  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (timesOfDay.isEmpty) {
+      throw ArgumentError.value(
+        timesOfDay,
+        'timesOfDay',
+        'Times of day list cannot be empty',
+      );
+    }
+  }
+
   /// The frequency at which this schedule occurs.
   ///
   /// For example, if this is `2`, then this schedule occurs every other day.

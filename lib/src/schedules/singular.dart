@@ -2,7 +2,7 @@ part of 'schedule_base.dart';
 
 /// Represents a schedule that occurs only once.
 class Singular extends Schedule {
-  const Singular({
+  Singular({
     // renamed to be more explicit that this is a single date
     required DateTime date,
   }) : super(startDate: date, endDate: date);

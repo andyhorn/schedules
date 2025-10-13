@@ -37,6 +37,37 @@ class Weekly extends Schedule {
       );
     }
   }
+  Weekly.timed({
+    required super.startDate,
+    required this.frequency,
+    required this.weekdays,
+    super.endDate,
+    required Iterable<TimeOfDay> timesOfDay,
+  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (frequency < 1) {
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
+    }
+
+    if (weekdays.isEmpty) {
+      throw ArgumentError.value(
+        weekdays,
+        'weekdays',
+        'Weekdays list cannot be empty',
+      );
+    }
+
+    if (weekdays.any((weekday) => weekday < 1 || weekday > 7)) {
+      throw ArgumentError.value(
+        weekdays,
+        'weekdays',
+        'Weekday must be between 1 and 7',
+      );
+    }
+  }
 
   /// The frequency at which this schedule occurs.
   ///

@@ -1,3 +1,4 @@
+import 'package:schedules/src/schedules/time_of_day.dart';
 import 'package:schedules/src/utils/utils.dart';
 
 part 'singular.dart';
@@ -7,16 +8,45 @@ part 'monthly.dart';
 part 'monthly_weekday.dart';
 part 'yearly.dart';
 
+/// Determines whether a schedule occurs at a specific time of day
+/// or not.
+sealed class ScheduleTimingMode {
+  const ScheduleTimingMode();
+}
+
+final class UnTimed extends ScheduleTimingMode {
+  const UnTimed();
+}
+
+final class Timed extends ScheduleTimingMode {
+  const Timed({
+    required this.timesOfDay,
+  });
+
+  final Iterable<TimeOfDay> timesOfDay;
+}
+
 /// A schedule represents a set of dates that an event occurs on.
 /// This is used to determine if an event occurs on a given date.
 ///
 /// For example, a schedule could represent an event that occurs every Monday and Wednesday.
 /// Or, a schedule could represent an event that occurs every 2 months on the 10th.
 sealed class Schedule {
-  const Schedule({
+  Schedule({
     required this.startDate,
     this.endDate,
-  });
+    this.timingMode = const UnTimed(),
+  }) {
+    if (timingMode case Timed(timesOfDay: final timesOfDay)) {
+      if (timesOfDay.isEmpty) {
+        throw ArgumentError.value(
+          timesOfDay,
+          'timesOfDay',
+          'Times of day list cannot be empty',
+        );
+      }
+    }
+  }
 
   /// The date that this schedule begins on.
   ///
@@ -28,8 +58,23 @@ sealed class Schedule {
   /// If this is `null`, then this schedule has no end date.
   final DateTime? endDate;
 
+  /// The timing mode of this schedule.
+  final ScheduleTimingMode timingMode;
+
+  /// Whether this schedule is timed.
+  bool get isTimed => timingMode is Timed;
+
   /// Determine if this schedule includes the given [date].
   bool occursOn(DateTime date);
+
+  /// Determine if this schedule occurs at the given [timeOfDay].
+  bool occursAt(TimeOfDay timeOfDay) {
+    if (timingMode case Timed(:final timesOfDay)) {
+      return timesOfDay.any((timeOfDay) => timeOfDay == timeOfDay);
+    }
+
+    return false;
+  }
 
   /// Returns an iterable of the next [n] occurrences for this schedule.
   Iterable<DateTime> getNextNOccurrences(

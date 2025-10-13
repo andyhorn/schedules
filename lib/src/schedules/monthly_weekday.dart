@@ -69,6 +69,39 @@ class MonthlyWeekday extends Schedule {
     }
   }
 
+  MonthlyWeekday.timed({
+    required super.startDate,
+    super.endDate,
+    required this.frequency,
+    required this.weekday,
+    required this.weekOfMonth,
+    required Iterable<TimeOfDay> timesOfDay,
+  }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (frequency < 1) {
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
+    }
+
+    if (weekday < 1 || weekday > 7) {
+      throw ArgumentError.value(
+        weekday,
+        'weekday',
+        'Weekday must be between 1 and 7',
+      );
+    }
+
+    if (weekOfMonth != -1 && (weekOfMonth < 1 || weekOfMonth > 5)) {
+      throw ArgumentError.value(
+        weekOfMonth,
+        'weekOfMonth',
+        'Week of month must be between 1 and 5, or -1 for last week of month',
+      );
+    }
+  }
+
   final int frequency;
   final int weekday;
   final int weekOfMonth;
