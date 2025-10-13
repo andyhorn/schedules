@@ -36,14 +36,6 @@ class Daily extends Schedule {
         'Frequency must be greater than or equal to 1',
       );
     }
-
-    if (timesOfDay.isEmpty) {
-      throw ArgumentError.value(
-        timesOfDay,
-        'timesOfDay',
-        'Times of day list cannot be empty',
-      );
-    }
   }
 
   /// The frequency at which this schedule occurs.
