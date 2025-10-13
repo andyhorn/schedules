@@ -126,11 +126,14 @@ class Monthly extends Schedule {
           continue;
         }
 
-        yield date;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+          occurrencesFound++;
 
-        if (occurrencesFound == n) {
-          return;
+          if (occurrencesFound == n) {
+            return;
+          }
         }
       }
 
@@ -196,7 +199,10 @@ class Monthly extends Schedule {
           continue;
         }
 
-        yield date;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+        }
       }
 
       currentMonth = currentMonth.addMonths(frequency, overflow: false);

@@ -155,8 +155,15 @@ class MonthlyWeekday extends Schedule {
             !isBeforeStartDates(occurrence) && !isExcluded(occurrence);
 
         if (isValidDate) {
-          yield occurrence;
-          occurrencesFound++;
+          // Generate timed occurrences for this date
+          for (final timedOccurrence in _generateTimedOccurrences(occurrence)) {
+            yield timedOccurrence;
+            occurrencesFound++;
+
+            if (occurrencesFound == n) {
+              return;
+            }
+          }
         }
       }
 
@@ -220,7 +227,10 @@ class MonthlyWeekday extends Schedule {
             !isBeforeStartDates(occurrence) && !isExcluded(occurrence);
 
         if (isValidDate) {
-          yield occurrence;
+          // Generate timed occurrences for this date
+          for (final timedOccurrence in _generateTimedOccurrences(occurrence)) {
+            yield timedOccurrence;
+          }
         }
       }
 

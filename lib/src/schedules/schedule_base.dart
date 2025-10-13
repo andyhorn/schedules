@@ -70,10 +70,20 @@ sealed class Schedule {
   /// Determine if this schedule occurs at the given [timeOfDay].
   bool occursAt(TimeOfDay timeOfDay) {
     if (timingMode case Timed(:final timesOfDay)) {
-      return timesOfDay.any((timeOfDay) => timeOfDay == timeOfDay);
+      return timesOfDay.any((scheduledTime) => scheduledTime == timeOfDay);
     }
 
     return false;
+  }
+
+  /// Generates timed occurrences for a given date.
+  /// Returns an iterable of DateTime instances with the scheduled times for the given date.
+  Iterable<DateTime> _generateTimedOccurrences(DateTime date) {
+    if (timingMode case Timed(:final timesOfDay)) {
+      return timesOfDay.map((timeOfDay) => date.withTimeOfDay(timeOfDay));
+    }
+
+    return [date];
   }
 
   /// Returns an iterable of the next [n] occurrences for this schedule.

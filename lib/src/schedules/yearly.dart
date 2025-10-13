@@ -86,8 +86,15 @@ class Yearly extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+          occurrencesFound++;
+
+          if (occurrencesFound == n) {
+            return;
+          }
+        }
       }
 
       if (isLeapYear) {
@@ -141,7 +148,10 @@ class Yearly extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+        }
       }
 
       if (isLeapYear) {

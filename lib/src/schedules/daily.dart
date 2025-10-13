@@ -29,6 +29,14 @@ class Daily extends Schedule {
     required Iterable<TimeOfDay> timesOfDay,
     super.endDate,
   }) : super(timingMode: Timed(timesOfDay: timesOfDay)) {
+    if (frequency < 1) {
+      throw ArgumentError.value(
+        frequency,
+        'frequency',
+        'Frequency must be greater than or equal to 1',
+      );
+    }
+
     if (timesOfDay.isEmpty) {
       throw ArgumentError.value(
         timesOfDay,
@@ -84,8 +92,15 @@ class Daily extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+          occurrencesFound++;
+
+          if (occurrencesFound == n) {
+            return;
+          }
+        }
       }
 
       currentDate = currentDate.add(Duration(days: frequency));
@@ -125,7 +140,10 @@ class Daily extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+        }
       }
 
       currentDate = currentDate.add(Duration(days: frequency));
