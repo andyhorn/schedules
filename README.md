@@ -6,10 +6,18 @@
 A pure-Dart package for generating and managing recurring events.
 
 ## Features
-
-- One-time, daily, weekly, monthly, and yearly recurring events with customizable frequencies and days-of-the-month (monthly) or weekdays (weekly)
-- Determine if an event occurs on a specific day or generate lists of occurrences
+- Determine if an event occurs on a specific day
+- Generate a list of _n_ events
+- Generate a list of events until _x_ date
 - Math-based algorithms for better performance
+
+**Schedule Types**
+  - One-time: An event that occurs only once
+  - Daily: An event that occurs every _n_ days
+  - Weekly: An event that occurs on one or more weekdays every _n_ weeks
+  - Monthly: An event that occurs on one or more days every _n_ months
+  - MonthlyWeekday: An event that occurs on the _x_th_ weekday every _n_ months
+  - Yearly: An event that occurs on a particular date every _n_ years
 
 ## Getting Started
 
@@ -85,6 +93,50 @@ final monthly = Monthly(
   days: [1, 15],
 );
 ```
+
+#### MonthlyWeekday
+
+Repeats every _n_ months on a specific weekday of a specific week:
+
+```dart
+// First Monday of every month,
+// beginning on January 1, 2023
+final firstMonday = MonthlyWeekday(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  weekday: DateTime.monday,
+  weekOfMonth: 1, // First occurrence
+);
+
+// Last Friday of every other month
+final lastFriday = MonthlyWeekday(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 2,
+  weekday: DateTime.friday,
+  weekOfMonth: -1, // Last occurrence
+);
+
+// Third Thursday of every month
+final thirdThursday = MonthlyWeekday(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  weekday: DateTime.thursday,
+  weekOfMonth: 3,
+);
+```
+
+**Parameters:**
+- `weekday`: The day of the week (1=Monday, 7=Sunday)
+- `weekOfMonth`: Which occurrence of the weekday (1-5, or -1 for last)
+- `frequency`: How often in months (1=every month, 2=every other month, etc.)
+
+**Week of Month Values:**
+- `1` = First occurrence (e.g., first Monday)
+- `2` = Second occurrence (e.g., second Friday)  
+- `3` = Third occurrence (e.g., third Tuesday)
+- `4` = Fourth occurrence (e.g., fourth Wednesday)
+- `5` = Fifth occurrence (e.g., fifth Thursday) - only exists in some months
+- `-1` = Last occurrence (e.g., last Friday) - finds the last occurrence, regardless of count
 
 #### Yearly
 
@@ -256,6 +308,42 @@ final q1Bills = [
 
 // Contains: [2023-01-01 (rent), 2023-01-15 (utilities), 2023-02-01 (rent), 
 //           2023-02-15 (utilities), 2023-03-01 (rent), 2023-03-15 (utilities)]
+```
+
+### Board Meeting Schedule
+```dart
+// Board meetings on the first Monday of every month
+final boardMeeting = MonthlyWeekday(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  weekday: DateTime.monday,
+  weekOfMonth: 1, // First Monday
+);
+
+// Team retrospectives on the last Friday of every other month
+final retrospective = MonthlyWeekday(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 2, // Every 2 months
+  weekday: DateTime.friday,
+  weekOfMonth: -1, // Last Friday
+);
+
+// Check if today is a meeting day
+final today = DateTime.now();
+if (boardMeeting.occursOn(today)) {
+  print('Board meeting today!');
+}
+
+// Get next 6 board meetings
+final nextMeetings = boardMeeting.getNextNOccurrences(6).toList();
+// Contains: [2023-01-02, 2023-02-06, 2023-03-06, 2023-04-03, 2023-05-01, 2023-06-05]
+
+// Get retrospectives for the year
+final yearRetrospectives = retrospective.getOccurrencesUntil(
+  DateTime(2024, 1, 1),
+  from: DateTime(2023, 1, 1),
+).toList();
+// Contains: [2023-01-27, 2023-03-31, 2023-05-26, 2023-07-28, 2023-09-29, 2023-11-24]
 ```
 
 ### Work Schedule with Holidays
