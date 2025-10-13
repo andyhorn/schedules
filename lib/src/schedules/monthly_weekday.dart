@@ -9,10 +9,10 @@ part of 'schedule_base.dart';
 class MonthlyWeekday extends Schedule {
   MonthlyWeekday._internal({
     required super.startDate,
-    super.endDate,
     required this.frequency,
     required this.weekday,
     required this.weekOfMonth,
+    super.endDate,
     super.timingMode,
   }) {
     if (frequency < 1) {
@@ -43,10 +43,10 @@ class MonthlyWeekday extends Schedule {
   /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth].
   factory MonthlyWeekday({
     required DateTime startDate,
-    DateTime? endDate,
     required int frequency,
     required int weekday,
     required int weekOfMonth,
+    DateTime? endDate,
   }) {
     return MonthlyWeekday._internal(
       startDate: startDate,
