@@ -79,7 +79,7 @@ class MonthlyWeekday extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) sync* {
-    var currentMonth = (from ?? startDate).startOfMonth();
+    var currentMonth = _clampToBounds(from).startOfMonth();
 
     bool isBeforeStartDates(DateTime date) {
       if (date.isEarlierDateThan(startDate)) {
@@ -141,7 +141,7 @@ class MonthlyWeekday extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) sync* {
-    var currentMonth = (from ?? startDate).startOfMonth();
+    var currentMonth = _clampToBounds(from).startOfMonth();
 
     bool isBeforeStartDates(DateTime date) {
       if (date.isEarlierDateThan(startDate)) {
