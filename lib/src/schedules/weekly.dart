@@ -6,12 +6,14 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [weekdays] is empty
 /// - any weekday in [weekdays] is not between 1 and 7 (inclusive)
+/// - [endDate] is before [startDate]
 class Weekly extends Schedule {
-  Weekly({
+  Weekly._internal({
     required super.startDate,
     required this.frequency,
     required this.weekdays,
     super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -36,6 +38,38 @@ class Weekly extends Schedule {
         'Weekday must be between 1 and 7',
       );
     }
+  }
+
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays].
+  factory Weekly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> weekdays,
+    DateTime? endDate,
+  }) {
+    return Weekly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      weekdays: weekdays,
+      endDate: endDate,
+    );
+  }
+
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays] at the given [timesOfDay].
+  factory Weekly.timed({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> weekdays,
+    required Iterable<TimeOfDay> timesOfDay,
+    DateTime? endDate,
+  }) {
+    return Weekly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      weekdays: weekdays,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The frequency at which this schedule occurs.
@@ -109,11 +143,14 @@ class Weekly extends Schedule {
           continue;
         }
 
-        yield date;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+          occurrencesFound++;
 
-        if (occurrencesFound == n) {
-          return;
+          if (occurrencesFound == n) {
+            return;
+          }
         }
       }
 
@@ -172,7 +209,10 @@ class Weekly extends Schedule {
           continue;
         }
 
-        yield date;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+        }
       }
 
       currentWeek = currentWeek.add(Duration(days: frequency * 7));

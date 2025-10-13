@@ -6,12 +6,14 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [days] is empty
 /// - any day in [days] is not between 1 and 31 (inclusive)
+/// - [endDate] is before [startDate]
 class Monthly extends Schedule {
-  Monthly({
+  Monthly._internal({
     required super.startDate,
-    super.endDate,
     required this.days,
     required this.frequency,
+    super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -28,6 +30,39 @@ class Monthly extends Schedule {
     if (days.any((day) => day < 1 || day > 31)) {
       throw ArgumentError.value(days, 'days', 'Day must be between 1 and 31');
     }
+  }
+
+  /// Creates a monthly schedule that occurs every [frequency] months on the given [days].
+  factory Monthly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> days,
+    DateTime? endDate,
+  }) {
+    return Monthly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      days: days,
+      endDate: endDate,
+      timingMode: const UnTimed(),
+    );
+  }
+
+  /// Creates a monthly schedule that occurs every [frequency] months on the given [days] at the given [timesOfDay].
+  factory Monthly.timed({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> days,
+    required Iterable<TimeOfDay> timesOfDay,
+    DateTime? endDate,
+  }) {
+    return Monthly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      days: days,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The days of the month that this schedule occurs on.
@@ -102,11 +137,14 @@ class Monthly extends Schedule {
           continue;
         }
 
-        yield date;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+          occurrencesFound++;
 
-        if (occurrencesFound == n) {
-          return;
+          if (occurrencesFound == n) {
+            return;
+          }
         }
       }
 
@@ -172,7 +210,10 @@ class Monthly extends Schedule {
           continue;
         }
 
-        yield date;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(date)) {
+          yield occurrence;
+        }
       }
 
       currentMonth = currentMonth.addMonths(frequency, overflow: false);

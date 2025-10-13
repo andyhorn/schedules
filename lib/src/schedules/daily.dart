@@ -4,11 +4,13 @@ part of 'schedule_base.dart';
 ///
 /// Throws an [ArgumentError] if:
 /// - [frequency] is less than 1
+/// - [endDate] is before [startDate]
 class Daily extends Schedule {
-  Daily({
+  Daily._internal({
     required super.startDate,
     required this.frequency,
     super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -17,6 +19,35 @@ class Daily extends Schedule {
         'Frequency must be greater than or equal to 1',
       );
     }
+  }
+
+  /// Creates a daily schedule that occurs every [frequency] days.
+  factory Daily({
+    required DateTime startDate,
+    required int frequency,
+    DateTime? endDate,
+  }) {
+    return Daily._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+      timingMode: const UnTimed(),
+    );
+  }
+
+  /// Creates a daily schedule that occurs every [frequency] days at the given [timesOfDay].
+  factory Daily.timed({
+    required DateTime startDate,
+    required int frequency,
+    required Iterable<TimeOfDay> timesOfDay,
+    DateTime? endDate,
+  }) {
+    return Daily._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The frequency at which this schedule occurs.
@@ -65,8 +96,15 @@ class Daily extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+          occurrencesFound++;
+
+          if (occurrencesFound == n) {
+            return;
+          }
+        }
       }
 
       currentDate = currentDate.add(Duration(days: frequency));
@@ -106,7 +144,10 @@ class Daily extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+        }
       }
 
       currentDate = currentDate.add(Duration(days: frequency));

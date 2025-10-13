@@ -2,15 +2,15 @@ part of 'schedule_base.dart';
 
 /// Represents a schedule that occurs every _n_ years.
 ///
-/// This schedule occurs on the same day and month as the [startDate].
-///
 /// Throws an [ArgumentError] if:
 /// - [frequency] is less than 1
+/// - [endDate] is before [startDate]
 class Yearly extends Schedule {
-  Yearly({
+  Yearly._internal({
     required super.startDate,
-    super.endDate,
     required this.frequency,
+    super.endDate,
+    super.timingMode,
   }) {
     if (frequency < 1) {
       throw ArgumentError.value(
@@ -19,6 +19,34 @@ class Yearly extends Schedule {
         'Frequency must be greater than or equal to 1',
       );
     }
+  }
+
+  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate].
+  factory Yearly({
+    required DateTime startDate,
+    required int frequency,
+    DateTime? endDate,
+  }) {
+    return Yearly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+    );
+  }
+
+  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate] at the given [timesOfDay].
+  factory Yearly.timed({
+    required DateTime startDate,
+    required int frequency,
+    required Iterable<TimeOfDay> timesOfDay,
+    DateTime? endDate,
+  }) {
+    return Yearly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+      timingMode: Timed(timesOfDay: timesOfDay),
+    );
   }
 
   /// The frequency at which this schedule occurs.
@@ -71,8 +99,15 @@ class Yearly extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
-        occurrencesFound++;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+          occurrencesFound++;
+
+          if (occurrencesFound == n) {
+            return;
+          }
+        }
       }
 
       if (isLeapYear) {
@@ -126,7 +161,10 @@ class Yearly extends Schedule {
       }
 
       if (!isExcluded(currentDate)) {
-        yield currentDate;
+        // Generate timed occurrences for this date
+        for (final occurrence in _generateTimedOccurrences(currentDate)) {
+          yield occurrence;
+        }
       }
 
       if (isLeapYear) {

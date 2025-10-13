@@ -121,6 +121,26 @@ void main() {
           expect(occurrences, [DateTime(2023, 01, 01)]);
         });
       });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Singular(date: DateTime(2023, 1, 1));
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Singular(date: DateTime(2023, 1, 1));
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
+        });
+      });
     });
 
     group(Daily, () {
@@ -412,6 +432,298 @@ void main() {
             DateTime(2023, 01, 03), // 02 and 04 are excluded
             DateTime(2023, 01, 05),
           ]);
+        });
+      });
+
+      group('Daily.timed', () {
+        group('constructor', () {
+          test('creates timed daily schedule with single time', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.timingMode, isA<Timed>());
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 10, minute: 30)), isFalse);
+          });
+
+          test('creates timed daily schedule with multiple times', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [
+                TimeOfDay(hour: 9, minute: 30),
+                TimeOfDay(hour: 14, minute: 0),
+                TimeOfDay(hour: 18, minute: 45),
+              ],
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 14, minute: 0)), isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 0)), isFalse);
+          });
+
+          test('throws ArgumentError for empty timesOfDay', () {
+            expect(
+              () => Daily.timed(
+                startDate: DateTime(2023, 1, 1),
+                frequency: 1,
+                timesOfDay: [],
+              ),
+              throwsA(isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Times of day list cannot be empty'),
+              )),
+            );
+          });
+
+          test('throws ArgumentError for invalid frequency', () {
+            expect(
+              () => Daily.timed(
+                startDate: DateTime(2023, 1, 1),
+                frequency: 0,
+                timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              ),
+              throwsA(isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Frequency must be greater than or equal to 1'),
+              )),
+            );
+          });
+        });
+
+        group('#occursAt', () {
+          test('returns true for scheduled times', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [
+                TimeOfDay(hour: 9, minute: 30),
+                TimeOfDay(hour: 14, minute: 0),
+              ],
+            );
+
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(TimeOfDay(hour: 14, minute: 0)), isTrue);
+          });
+
+          test('returns false for non-scheduled times', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.occursAt(TimeOfDay(hour: 10, minute: 30)), isFalse);
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 31)), isFalse);
+          });
+        });
+
+        group('#occursOn', () {
+          test('returns true for dates that match the schedule pattern', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 2,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 1, 3)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 1, 5)), isTrue);
+          });
+
+          test('returns false for dates that do not match the schedule pattern',
+              () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 2,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
+            expect(schedule.occursOn(DateTime(2023, 1, 4)), isFalse);
+          });
+        });
+
+        group('#getNextNOccurrences', () {
+          test('returns occurrences with correct times for single time', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(3).toList();
+
+            expect(occurrences, hasLength(3));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 2, 9, 30)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 3, 9, 30)));
+          });
+
+          test('returns occurrences with correct times for multiple times', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [
+                TimeOfDay(hour: 9, minute: 30),
+                TimeOfDay(hour: 14, minute: 0),
+              ],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(4).toList();
+
+            expect(occurrences, hasLength(4));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14, 0)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 2, 9, 30)));
+            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14, 0)));
+          });
+
+          test('respects frequency parameter', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 2,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(3).toList();
+
+            expect(occurrences, hasLength(3));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 3, 9, 30)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 5, 9, 30)));
+          });
+
+          test('respects from parameter', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule
+                .getNextNOccurrences(2, from: DateTime(2023, 1, 3))
+                .toList();
+
+            expect(occurrences, hasLength(2));
+            expect(occurrences[0], equals(DateTime(2023, 1, 3, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 4, 9, 30)));
+          });
+
+          test('excludes specified dates', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(
+              3,
+              exclude: [DateTime(2023, 1, 2)],
+            ).toList();
+
+            expect(occurrences, hasLength(3));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 3, 9, 30)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 4, 9, 30)));
+          });
+        });
+
+        group('#getOccurrencesUntil', () {
+          test('returns occurrences with correct times until end date', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences =
+                schedule.getOccurrencesUntil(DateTime(2023, 1, 3)).toList();
+
+            expect(occurrences, hasLength(3));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 2, 9, 30)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 3, 9, 30)));
+          });
+
+          test('returns occurrences with multiple times until end date', () {
+            final schedule = Daily.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              timesOfDay: [
+                TimeOfDay(hour: 9, minute: 30),
+                TimeOfDay(hour: 14, minute: 0),
+              ],
+            );
+
+            final occurrences =
+                schedule.getOccurrencesUntil(DateTime(2023, 1, 2)).toList();
+
+            expect(occurrences, hasLength(4));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14, 0)));
+            expect(occurrences[2], equals(DateTime(2023, 1, 2, 9, 30)));
+            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14, 0)));
+          });
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('returns true for any time of day regardless of frequency', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 3, // Every 3 days
+          );
+
+          // Even with frequency > 1, UnTimed schedules should return true for any time
+          expect(schedule.occursAt(TimeOfDay(hour: 8, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 15, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 22, minute: 15)), isTrue);
+        });
+
+        test('returns true for any time of day with end date', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            endDate: DateTime(2023, 1, 10),
+            frequency: 1,
+          );
+
+          // UnTimed schedules with end date should still return true for any time
+          expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 16, minute: 45)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 21, minute: 30)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
@@ -791,6 +1103,107 @@ void main() {
             DateTime(2023, 01, 23),
             DateTime(2023, 01, 27),
           ]);
+        });
+      });
+
+      group('Weekly.timed', () {
+        group('constructor', () {
+          test('creates timed weekly schedule', () {
+            final schedule = Weekly.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              weekdays: [DateTime.monday, DateTime.wednesday],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.timingMode, isA<Timed>());
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+          });
+
+          test('throws ArgumentError for empty timesOfDay', () {
+            expect(
+              () => Weekly.timed(
+                startDate: DateTime(2023, 1, 1),
+                frequency: 1,
+                weekdays: [DateTime.monday],
+                timesOfDay: [],
+              ),
+              throwsA(isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Times of day list cannot be empty'),
+              )),
+            );
+          });
+        });
+
+        group('#occursOn', () {
+          test('returns true for correct weekdays', () {
+            final schedule = Weekly.timed(
+              startDate: DateTime(2023, 1, 1), // Sunday
+              frequency: 1,
+              weekdays: [DateTime.monday, DateTime.wednesday],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.occursOn(DateTime(2023, 1, 2)), isTrue); // Monday
+            expect(
+                schedule.occursOn(DateTime(2023, 1, 4)), isTrue); // Wednesday
+            expect(schedule.occursOn(DateTime(2023, 1, 3)), isFalse); // Tuesday
+          });
+        });
+
+        group('#getNextNOccurrences', () {
+          test('returns occurrences with correct times for weekly schedule',
+              () {
+            final schedule = Weekly.timed(
+              startDate: DateTime(2023, 1, 1), // Sunday
+              frequency: 1,
+              weekdays: [DateTime.monday, DateTime.wednesday],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(4).toList();
+
+            expect(occurrences, hasLength(4));
+            expect(
+                occurrences[0], equals(DateTime(2023, 1, 2, 9, 30))); // Monday
+            expect(occurrences[1],
+                equals(DateTime(2023, 1, 4, 9, 30))); // Wednesday
+            expect(occurrences[2],
+                equals(DateTime(2023, 1, 9, 9, 30))); // Next Monday
+            expect(occurrences[3],
+                equals(DateTime(2023, 1, 11, 9, 30))); // Next Wednesday
+          });
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
@@ -1240,6 +1653,88 @@ void main() {
             DateTime(2023, 04, 01),
             DateTime(2023, 04, 15),
           ]);
+        });
+      });
+
+      group('Monthly.timed', () {
+        group('constructor', () {
+          test('creates timed monthly schedule', () {
+            final schedule = Monthly.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              days: [1, 15],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.timingMode, isA<Timed>());
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+          });
+        });
+
+        group('#occursOn', () {
+          test('returns true for correct days of month', () {
+            final schedule = Monthly.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              days: [1, 15],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 1, 15)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 2, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 2, 15)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 1, 10)), isFalse);
+          });
+        });
+
+        group('#getNextNOccurrences', () {
+          test('returns occurrences with correct times for monthly schedule',
+              () {
+            final schedule = Monthly.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              days: [1, 15],
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(4).toList();
+
+            expect(occurrences, hasLength(4));
+            expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 15, 9, 30)));
+            expect(occurrences[2], equals(DateTime(2023, 2, 1, 9, 30)));
+            expect(occurrences[3], equals(DateTime(2023, 2, 15, 9, 30)));
+          });
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            days: [1, 15],
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            days: [1, 15],
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
@@ -1720,6 +2215,69 @@ void main() {
                   DateTime(2024, 02, 29))); // Fifth Thursday of February 2024
         });
       });
+
+      group('MonthlyWeekday.timed', () {
+        group('constructor', () {
+          test('creates timed monthly weekday schedule', () {
+            final schedule = MonthlyWeekday.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              weekday: DateTime.monday,
+              weekOfMonth: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.timingMode, isA<Timed>());
+            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+          });
+        });
+
+        group('#occursOn', () {
+          test('returns true for correct weekday of month', () {
+            final schedule = MonthlyWeekday.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              weekday: DateTime.monday,
+              weekOfMonth: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            // First Monday of January 2023 is January 2
+            expect(schedule.occursOn(DateTime(2023, 1, 2)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 2, 6)),
+                isTrue); // First Monday of February
+            expect(schedule.occursOn(DateTime(2023, 1, 9)),
+                isFalse); // Second Monday
+          });
+        });
+
+        group('#getNextNOccurrences', () {
+          test(
+              'returns occurrences with correct times for monthly weekday schedule',
+              () {
+            final schedule = MonthlyWeekday.timed(
+              startDate: DateTime(2023, 1, 1),
+              frequency: 1,
+              weekday: DateTime.monday,
+              weekOfMonth: 1,
+              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            );
+
+            final occurrences = schedule.getNextNOccurrences(3).toList();
+
+            expect(occurrences, hasLength(3));
+            expect(occurrences[0],
+                equals(DateTime(2023, 1, 2, 9, 30))); // First Monday of January
+            expect(
+                occurrences[1],
+                equals(
+                    DateTime(2023, 2, 6, 9, 30))); // First Monday of February
+            expect(occurrences[2],
+                equals(DateTime(2023, 3, 6, 9, 30))); // First Monday of March
+          });
+        });
+      });
     });
 
     group(Yearly, () {
@@ -2121,6 +2679,80 @@ void main() {
         });
       });
     });
+
+    group('Yearly.timed', () {
+      group('constructor', () {
+        test('creates timed yearly schedule', () {
+          final schedule = Yearly.timed(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          );
+
+          expect(schedule.isTimed, isTrue);
+          expect(schedule.timingMode, isA<Timed>());
+          expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+        });
+      });
+
+      group('#occursOn', () {
+        test('returns true for same day and month', () {
+          final schedule = Yearly.timed(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 2, 1)), isFalse);
+        });
+      });
+
+      group('#getNextNOccurrences', () {
+        test('returns occurrences with correct times for yearly schedule', () {
+          final schedule = Yearly.timed(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences, hasLength(3));
+          expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+          expect(occurrences[1], equals(DateTime(2024, 1, 1, 9, 30)));
+          expect(occurrences[2], equals(DateTime(2025, 1, 1, 9, 30)));
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
+        });
+      });
+    });
   });
 
   group('findNextNOccurrences', () {
@@ -2330,6 +2962,82 @@ void main() {
       expect(occurrences[7], equals(DateTime(2023, 2, 10))); // Fourth Friday
       expect(occurrences[8],
           equals(DateTime(2023, 2, 14))); // Fifth Tuesday (end date)
+    });
+  });
+
+  group('Timed Schedules', () {
+    group('Timed Schedule Edge Cases', () {
+      test('handles multiple times per day correctly', () {
+        final schedule = Daily.timed(
+          startDate: DateTime(2023, 1, 1),
+          frequency: 1,
+          timesOfDay: [
+            TimeOfDay(hour: 8, minute: 0),
+            TimeOfDay(hour: 12, minute: 0),
+            TimeOfDay(hour: 18, minute: 0),
+          ],
+        );
+
+        final occurrences = schedule.getNextNOccurrences(6).toList();
+
+        expect(occurrences, hasLength(6));
+        expect(occurrences[0], equals(DateTime(2023, 1, 1, 8, 0)));
+        expect(occurrences[1], equals(DateTime(2023, 1, 1, 12, 0)));
+        expect(occurrences[2], equals(DateTime(2023, 1, 1, 18, 0)));
+        expect(occurrences[3], equals(DateTime(2023, 1, 2, 8, 0)));
+        expect(occurrences[4], equals(DateTime(2023, 1, 2, 12, 0)));
+        expect(occurrences[5], equals(DateTime(2023, 1, 2, 18, 0)));
+      });
+
+      test('handles times with seconds and milliseconds', () {
+        final schedule = Daily.timed(
+          startDate: DateTime(2023, 1, 1),
+          frequency: 1,
+          timesOfDay: [
+            TimeOfDay(hour: 9, minute: 30, second: 45, millisecond: 123),
+          ],
+        );
+
+        final occurrences = schedule.getNextNOccurrences(2).toList();
+
+        expect(occurrences, hasLength(2));
+        expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30, 45, 123)));
+        expect(occurrences[1], equals(DateTime(2023, 1, 2, 9, 30, 45, 123)));
+      });
+
+      test('handles end date constraint for timed schedules', () {
+        final schedule = Daily.timed(
+          startDate: DateTime(2023, 1, 1),
+          frequency: 1,
+          timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          endDate: DateTime(2023, 1, 2),
+        );
+
+        final occurrences =
+            schedule.getOccurrencesUntil(DateTime(2023, 1, 5)).toList();
+
+        expect(occurrences, hasLength(2));
+        expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+        expect(occurrences[1], equals(DateTime(2023, 1, 2, 9, 30)));
+      });
+
+      test('handles exclusion of specific times', () {
+        final schedule = Daily.timed(
+          startDate: DateTime(2023, 1, 1),
+          frequency: 1,
+          timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+        );
+
+        final occurrences = schedule.getNextNOccurrences(
+          3,
+          exclude: [DateTime(2023, 1, 2, 9, 30)],
+        ).toList();
+
+        expect(occurrences, hasLength(3));
+        expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
+        expect(occurrences[1], equals(DateTime(2023, 1, 3, 9, 30)));
+        expect(occurrences[2], equals(DateTime(2023, 1, 4, 9, 30)));
+      });
     });
   });
 }
