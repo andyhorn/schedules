@@ -1,3 +1,10 @@
+## 1.3.0
+- Add support for timed events
+  - Add a new `TimeOfDay` class
+  - Add a new `occursAt(TimeOfDay)` method on all schedules
+  - All schedules have a new `.timed` constructor that takes one or more `TimeOfDay` objects
+  - List generation methods take times of day into account, when appropriate
+
 ## 1.2.0
 - Add a new `MonthlyWeekday` schedule to represent events that occur on the _n_th weekday every _x_ months.
 
