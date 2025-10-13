@@ -1,8 +1,13 @@
+## 1.2.0
+- Add a new `MonthlyWeekday` schedule to represent events that occur on the _n_th weekday every _x_ months.
+
 ## 1.1.0
+
 - Add new versions of list-generating methods using math-based Iterable generators for improved performance
 - Mark previous brute-force list-generating methods deprecated
 
 ## 1.0.0
+
 - Begin stable build versioning
 - Add two new methods for generating lists of dates that occur on a given schedule (thank you @v.paragallo.ict)
 
