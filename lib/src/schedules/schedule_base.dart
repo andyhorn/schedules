@@ -42,7 +42,7 @@ sealed class Schedule {
         throw ArgumentError.value(
           endDate,
           'endDate',
-          'End date must be after start date',
+          'End date must be on or after start date',
         );
       }
     }
