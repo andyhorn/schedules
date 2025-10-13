@@ -4,6 +4,7 @@ part 'singular.dart';
 part 'daily.dart';
 part 'weekly.dart';
 part 'monthly.dart';
+part 'monthly_weekday.dart';
 part 'yearly.dart';
 
 /// A schedule represents a set of dates that an event occurs on.
