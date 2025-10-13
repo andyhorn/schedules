@@ -1,4 +1,4 @@
-import 'package:schedules/src/utils/extensions.dart';
+import 'package:schedules/schedules.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -605,6 +605,254 @@ void main() {
         final date = DateTime(2023, 5, 10); // Wednesday
         final result = date.withWeekday(DateTime.monday);
         expect(result, equals(date.add(Duration(days: -2))));
+      });
+    });
+
+    group('#toTimeOfDay', () {
+      test('converts DateTime with all time components to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 14, 30, 45, 123);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(14));
+        expect(timeOfDay.minute, equals(30));
+        expect(timeOfDay.second, equals(45));
+        expect(timeOfDay.millisecond, equals(123));
+      });
+
+      test('converts DateTime at midnight to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 0, 0, 0, 0);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(0));
+        expect(timeOfDay.minute, equals(0));
+        expect(timeOfDay.second, equals(0));
+        expect(timeOfDay.millisecond, equals(0));
+      });
+
+      test('converts DateTime at noon to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 12, 0, 0, 0);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(12));
+        expect(timeOfDay.minute, equals(0));
+        expect(timeOfDay.second, equals(0));
+        expect(timeOfDay.millisecond, equals(0));
+      });
+
+      test('converts DateTime at one second before midnight to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 23, 59, 59, 999);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(23));
+        expect(timeOfDay.minute, equals(59));
+        expect(timeOfDay.second, equals(59));
+        expect(timeOfDay.millisecond, equals(999));
+      });
+
+      test('converts DateTime with only hour and minute to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 9, 30);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(9));
+        expect(timeOfDay.minute, equals(30));
+        expect(timeOfDay.second, equals(0));
+        expect(timeOfDay.millisecond, equals(0));
+      });
+
+      test('converts DateTime with hour, minute, and second to TimeOfDay', () {
+        final dateTime = DateTime(2023, 6, 15, 16, 45, 30);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(16));
+        expect(timeOfDay.minute, equals(45));
+        expect(timeOfDay.second, equals(30));
+        expect(timeOfDay.millisecond, equals(0));
+      });
+
+      test('handles leap year date correctly', () {
+        final dateTime = DateTime(2024, 2, 29, 12, 30, 45, 123);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(12));
+        expect(timeOfDay.minute, equals(30));
+        expect(timeOfDay.second, equals(45));
+        expect(timeOfDay.millisecond, equals(123));
+      });
+
+      test('handles year boundary correctly', () {
+        final dateTime = DateTime(2023, 12, 31, 23, 59, 59, 999);
+        final timeOfDay = dateTime.toTimeOfDay();
+
+        expect(timeOfDay.hour, equals(23));
+        expect(timeOfDay.minute, equals(59));
+        expect(timeOfDay.second, equals(59));
+        expect(timeOfDay.millisecond, equals(999));
+      });
+    });
+
+    group('#withTimeOfDay', () {
+      test('creates DateTime with specified TimeOfDay', () {
+        final date = DateTime(2023, 6, 15);
+        final timeOfDay =
+            TimeOfDay(hour: 14, minute: 30, second: 45, millisecond: 123);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(14));
+        expect(result.minute, equals(30));
+        expect(result.second, equals(45));
+        expect(result.millisecond, equals(123));
+      });
+
+      test('creates DateTime at midnight with TimeOfDay', () {
+        final date = DateTime(2023, 6, 15);
+        final timeOfDay =
+            TimeOfDay(hour: 0, minute: 0, second: 0, millisecond: 0);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(0));
+        expect(result.minute, equals(0));
+        expect(result.second, equals(0));
+        expect(result.millisecond, equals(0));
+      });
+
+      test('creates DateTime at noon with TimeOfDay', () {
+        final date = DateTime(2023, 6, 15);
+        final timeOfDay =
+            TimeOfDay(hour: 12, minute: 0, second: 0, millisecond: 0);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(12));
+        expect(result.minute, equals(0));
+        expect(result.second, equals(0));
+        expect(result.millisecond, equals(0));
+      });
+
+      test('creates DateTime at one second before midnight with TimeOfDay', () {
+        final date = DateTime(2023, 6, 15);
+        final timeOfDay =
+            TimeOfDay(hour: 23, minute: 59, second: 59, millisecond: 999);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(23));
+        expect(result.minute, equals(59));
+        expect(result.second, equals(59));
+        expect(result.millisecond, equals(999));
+      });
+
+      test('overwrites existing time components', () {
+        final date = DateTime(2023, 6, 15, 10, 20, 30, 400);
+        final timeOfDay =
+            TimeOfDay(hour: 15, minute: 45, second: 12, millisecond: 789);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(15));
+        expect(result.minute, equals(45));
+        expect(result.second, equals(12));
+        expect(result.millisecond, equals(789));
+      });
+
+      test('preserves original DateTime when creating new one', () {
+        final originalDate = DateTime(2023, 6, 15, 10, 20, 30, 400);
+        final timeOfDay =
+            TimeOfDay(hour: 15, minute: 45, second: 12, millisecond: 789);
+        final result = originalDate.withTimeOfDay(timeOfDay);
+
+        // Original should remain unchanged
+        expect(originalDate.year, equals(2023));
+        expect(originalDate.month, equals(6));
+        expect(originalDate.day, equals(15));
+        expect(originalDate.hour, equals(10));
+        expect(originalDate.minute, equals(20));
+        expect(originalDate.second, equals(30));
+        expect(originalDate.millisecond, equals(400));
+
+        // Result should have new time
+        expect(result.hour, equals(15));
+        expect(result.minute, equals(45));
+        expect(result.second, equals(12));
+        expect(result.millisecond, equals(789));
+      });
+
+      test('handles leap year date correctly', () {
+        final date = DateTime(2024, 2, 29);
+        final timeOfDay =
+            TimeOfDay(hour: 12, minute: 30, second: 45, millisecond: 123);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2024));
+        expect(result.month, equals(2));
+        expect(result.day, equals(29));
+        expect(result.hour, equals(12));
+        expect(result.minute, equals(30));
+        expect(result.second, equals(45));
+        expect(result.millisecond, equals(123));
+      });
+
+      test('handles year boundary correctly', () {
+        final date = DateTime(2023, 12, 31);
+        final timeOfDay =
+            TimeOfDay(hour: 23, minute: 59, second: 59, millisecond: 999);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(12));
+        expect(result.day, equals(31));
+        expect(result.hour, equals(23));
+        expect(result.minute, equals(59));
+        expect(result.second, equals(59));
+        expect(result.millisecond, equals(999));
+      });
+
+      test('handles TimeOfDay with default values', () {
+        final date = DateTime(2023, 6, 15);
+        final timeOfDay = TimeOfDay(hour: 9, minute: 15);
+        final result = date.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2023));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+        expect(result.hour, equals(9));
+        expect(result.minute, equals(15));
+        expect(result.second, equals(0));
+        expect(result.millisecond, equals(0));
+      });
+
+      test('round-trip conversion preserves time', () {
+        final originalDateTime = DateTime(2023, 6, 15, 14, 30, 45, 123);
+        final timeOfDay = originalDateTime.toTimeOfDay();
+        final result = originalDateTime.withTimeOfDay(timeOfDay);
+
+        expect(result, equals(originalDateTime));
+      });
+
+      test('round-trip conversion with different date preserves time', () {
+        final originalDateTime = DateTime(2023, 6, 15, 14, 30, 45, 123);
+        final differentDate = DateTime(2024, 12, 25);
+        final timeOfDay = originalDateTime.toTimeOfDay();
+        final result = differentDate.withTimeOfDay(timeOfDay);
+
+        expect(result.year, equals(2024));
+        expect(result.month, equals(12));
+        expect(result.day, equals(25));
+        expect(result.hour, equals(14));
+        expect(result.minute, equals(30));
+        expect(result.second, equals(45));
+        expect(result.millisecond, equals(123));
       });
     });
   });
