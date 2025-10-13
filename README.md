@@ -161,7 +161,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  schedules: ^1.1.0
+  schedules: ^1.3.0
 ```
 
 Or install directly:
