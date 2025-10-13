@@ -1244,6 +1244,484 @@ void main() {
       });
     });
 
+    group(MonthlyWeekday, () {
+      test('throws an error if frequency is less than 1', () {
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 01, 01),
+                  weekday: DateTime.monday,
+                  weekOfMonth: 1,
+                  frequency: 0,
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('throws error for invalid weekday values', () {
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: 0, // Invalid weekday
+                  weekOfMonth: 1,
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: 8, // Invalid weekday
+                  weekOfMonth: 1,
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('throws error for invalid weekOfMonth values', () {
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: DateTime.monday,
+                  weekOfMonth: 0, // Invalid weekOfMonth
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: DateTime.monday,
+                  weekOfMonth: 6, // Invalid weekOfMonth
+                  frequency: 1,
+                ),
+            throwsA(isA<ArgumentError>()));
+      });
+
+      test('accepts valid values including -1 for last occurrence', () {
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: DateTime.monday,
+                  weekOfMonth: -1, // Last occurrence
+                  frequency: 1,
+                ),
+            returnsNormally);
+
+        expect(
+            () => MonthlyWeekday(
+                  startDate: DateTime(2023, 1, 1),
+                  weekday: DateTime.friday,
+                  weekOfMonth: 5, // Fifth occurrence
+                  frequency: 2,
+                ),
+            returnsNormally);
+      });
+
+      group('#occursOn', () {
+        test('is false on the start date if it is not the correct weekday', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01), // Sunday
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 01, 01)), isFalse);
+        });
+
+        test('is true on the start date if it matches the pattern', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 02), // Monday
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
+        });
+
+        test('correctly identifies first Monday of each month', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          // January 2023: First Monday is Jan 2
+          expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 09)),
+              isFalse); // Second Monday
+          expect(schedule.occursOn(DateTime(2023, 01, 16)),
+              isFalse); // Third Monday
+
+          // February 2023: First Monday is Feb 6
+          expect(schedule.occursOn(DateTime(2023, 02, 06)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 02, 13)),
+              isFalse); // Second Monday
+        });
+
+        test('correctly identifies second Friday of each month', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.friday,
+            weekOfMonth: 2,
+            frequency: 1,
+          );
+
+          // January 2023: First Friday is Jan 6, second is Jan 13
+          expect(schedule.occursOn(DateTime(2023, 01, 06)),
+              isFalse); // First Friday
+          expect(schedule.occursOn(DateTime(2023, 01, 13)),
+              isTrue); // Second Friday
+          expect(schedule.occursOn(DateTime(2023, 01, 20)),
+              isFalse); // Third Friday
+
+          // February 2023: First Friday is Feb 3, second is Feb 10
+          expect(schedule.occursOn(DateTime(2023, 02, 03)),
+              isFalse); // First Friday
+          expect(schedule.occursOn(DateTime(2023, 02, 10)),
+              isTrue); // Second Friday
+        });
+
+        test('correctly identifies last Friday of each month', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.friday,
+            weekOfMonth: -1, // Last occurrence
+            frequency: 1,
+          );
+
+          // January 2023: Last Friday is Jan 27
+          expect(schedule.occursOn(DateTime(2023, 01, 27)), isTrue);
+          expect(
+              schedule.occursOn(DateTime(2023, 01, 20)), isFalse); // Not last
+          expect(
+              schedule.occursOn(DateTime(2023, 01, 13)), isFalse); // Not last
+
+          // February 2023: Last Friday is Feb 24
+          expect(schedule.occursOn(DateTime(2023, 02, 24)), isTrue);
+          expect(
+              schedule.occursOn(DateTime(2023, 02, 17)), isFalse); // Not last
+        });
+
+        test('correctly identifies fifth Friday when it exists', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.friday,
+            weekOfMonth: 5,
+            frequency: 1,
+          );
+
+          // March 2023: Has 5 Fridays (3, 10, 17, 24, 31)
+          expect(schedule.occursOn(DateTime(2023, 03, 31)),
+              isTrue); // Fifth Friday
+          expect(schedule.occursOn(DateTime(2023, 03, 24)),
+              isFalse); // Fourth Friday
+
+          // April 2023: Only has 4 Fridays, so no fifth Friday
+          expect(schedule.occursOn(DateTime(2023, 04, 28)),
+              isFalse); // Last Friday in April
+        });
+
+        test('respects frequency parameter', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 2, // Every 2 months
+          );
+
+          // January 2023: Should occur (month 0)
+          expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
+
+          // February 2023: Should not occur (month 1)
+          expect(schedule.occursOn(DateTime(2023, 02, 06)), isFalse);
+
+          // March 2023: Should occur (month 2)
+          expect(schedule.occursOn(DateTime(2023, 03, 06)), isTrue);
+
+          // April 2023: Should not occur (month 3)
+          expect(schedule.occursOn(DateTime(2023, 04, 03)), isFalse);
+        });
+
+        test('is false before the start date', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2022, 12, 05)), isFalse);
+          expect(schedule.occursOn(DateTime(2022, 12, 31)), isFalse);
+        });
+
+        test('is false after the end date', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            endDate: DateTime(2023, 03, 31),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          expect(schedule.occursOn(DateTime(2023, 04, 03)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 12, 04)), isFalse);
+        });
+
+        test('is false on wrong weekday', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          // First Tuesday of January 2023
+          expect(schedule.occursOn(DateTime(2023, 01, 03)), isFalse);
+          // First Wednesday of January 2023
+          expect(schedule.occursOn(DateTime(2023, 01, 04)), isFalse);
+        });
+      });
+
+      group('#getNextNOccurrences', () {
+        test('returns correct first Monday occurrences', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences.length, equals(3));
+          expect(occurrences[0],
+              equals(DateTime(2023, 01, 02))); // First Monday of Jan
+          expect(occurrences[1],
+              equals(DateTime(2023, 02, 06))); // First Monday of Feb
+          expect(occurrences[2],
+              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+        });
+
+        test('returns correct last Friday occurrences', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.friday,
+            weekOfMonth: -1, // Last occurrence
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences.length, equals(3));
+          expect(occurrences[0],
+              equals(DateTime(2023, 01, 27))); // Last Friday of Jan
+          expect(occurrences[1],
+              equals(DateTime(2023, 02, 24))); // Last Friday of Feb
+          expect(occurrences[2],
+              equals(DateTime(2023, 03, 31))); // Last Friday of Mar
+        });
+
+        test('respects frequency parameter', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 2, // Every 2 months
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          expect(occurrences.length, equals(3));
+          expect(occurrences[0], equals(DateTime(2023, 01, 02))); // January
+          expect(occurrences[1],
+              equals(DateTime(2023, 03, 06))); // March (skipped Feb)
+          expect(occurrences[2],
+              equals(DateTime(2023, 05, 01))); // May (skipped Apr)
+        });
+
+        test('handles from parameter correctly', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(2, from: DateTime(2023, 03, 01))
+              .toList();
+
+          expect(occurrences.length, equals(2));
+          expect(occurrences[0],
+              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+          expect(occurrences[1],
+              equals(DateTime(2023, 04, 03))); // First Monday of Apr
+        });
+
+        test('excludes specified dates', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final exclude = [DateTime(2023, 02, 06)]; // First Monday of February
+          final occurrences =
+              schedule.getNextNOccurrences(3, exclude: exclude).toList();
+
+          expect(occurrences.length, equals(3));
+          expect(occurrences[0],
+              equals(DateTime(2023, 01, 02))); // First Monday of Jan
+          expect(
+              occurrences[1],
+              equals(DateTime(
+                  2023, 03, 06))); // First Monday of Mar (Feb excluded)
+          expect(occurrences[2],
+              equals(DateTime(2023, 04, 03))); // First Monday of Apr
+        });
+
+        test('handles start date that is not the first day of month', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 15), // Start mid-month
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(2).toList();
+          expect(occurrences.length, equals(2));
+          expect(occurrences[0],
+              equals(DateTime(2023, 02, 06))); // First Monday of Feb
+          expect(occurrences[1],
+              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+        });
+      });
+
+      group('#getOccurrencesUntil', () {
+        test('returns all occurrences within date range', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
+
+          expect(occurrences.length, equals(3));
+          expect(occurrences[0],
+              equals(DateTime(2023, 01, 02))); // First Monday of Jan
+          expect(occurrences[1],
+              equals(DateTime(2023, 02, 06))); // First Monday of Feb
+          expect(occurrences[2],
+              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+        });
+
+        test('returns empty list when end date is before start date', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
+          expect(occurrences, isEmpty);
+        });
+
+        test('respects from parameter', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(
+                DateTime(2023, 04, 01),
+                from: DateTime(2023, 02, 01),
+              )
+              .toList();
+
+          expect(occurrences.length, equals(2));
+          expect(occurrences[0],
+              equals(DateTime(2023, 02, 06))); // First Monday of Feb
+          expect(occurrences[1],
+              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+        });
+
+        test('excludes specified dates', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 1,
+          );
+
+          final exclude = [DateTime(2023, 02, 06)]; // First Monday of February
+          final occurrences = schedule
+              .getOccurrencesUntil(
+                DateTime(2023, 04, 01),
+                exclude: exclude,
+              )
+              .toList();
+
+          expect(occurrences.length, equals(2));
+          expect(occurrences[0],
+              equals(DateTime(2023, 01, 02))); // First Monday of Jan
+          expect(
+              occurrences[1],
+              equals(DateTime(
+                  2023, 03, 06))); // First Monday of Mar (Feb excluded)
+        });
+
+        test('handles months with different numbers of weekdays', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2023, 01, 01),
+            weekday: DateTime.friday,
+            weekOfMonth: 5, // Fifth Friday
+            frequency: 1,
+          );
+
+          // March 2023 has 5 Fridays, April 2023 has 4 Fridays
+          final marchOccurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
+          expect(marchOccurrences.length, equals(1));
+          expect(marchOccurrences[0],
+              equals(DateTime(2023, 03, 31))); // Fifth Friday of March
+
+          final aprilOccurrences =
+              schedule.getOccurrencesUntil(DateTime(2023, 05, 01)).toList();
+          expect(aprilOccurrences.length,
+              equals(1)); // Still only March occurrence
+        });
+
+        test('handles leap year February correctly', () {
+          final schedule = MonthlyWeekday(
+            startDate: DateTime(2024, 01, 01), // 2024 is a leap year
+            weekday: DateTime.thursday,
+            weekOfMonth: 5, // Fifth Thursday
+            frequency: 1,
+          );
+
+          // February 2024 has 5 Thursdays due to leap year
+          final occurrences =
+              schedule.getOccurrencesUntil(DateTime(2024, 03, 01)).toList();
+          expect(occurrences.length, equals(1));
+          expect(
+              occurrences[0],
+              equals(
+                  DateTime(2024, 02, 29))); // Fifth Thursday of February 2024
+        });
+      });
+    });
+
     group(Yearly, () {
       test('throws an error if frequency is less than 1', () {
         expect(
@@ -1852,481 +2330,6 @@ void main() {
       expect(occurrences[7], equals(DateTime(2023, 2, 10))); // Fourth Friday
       expect(occurrences[8],
           equals(DateTime(2023, 2, 14))); // Fifth Tuesday (end date)
-    });
-  });
-
-  group(MonthlyWeekday, () {
-    test('throws an error if frequency is less than 1', () {
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 01, 01),
-                weekday: DateTime.monday,
-                weekOfMonth: 1,
-                frequency: 0,
-              ),
-          throwsA(isA<ArgumentError>()));
-    });
-
-    test('throws error for invalid weekday values', () {
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: 0, // Invalid weekday
-                weekOfMonth: 1,
-                frequency: 1,
-              ),
-          throwsA(isA<ArgumentError>()));
-
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: 8, // Invalid weekday
-                weekOfMonth: 1,
-                frequency: 1,
-              ),
-          throwsA(isA<ArgumentError>()));
-    });
-
-    test('throws error for invalid weekOfMonth values', () {
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: DateTime.monday,
-                weekOfMonth: 0, // Invalid weekOfMonth
-                frequency: 1,
-              ),
-          throwsA(isA<ArgumentError>()));
-
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: DateTime.monday,
-                weekOfMonth: 6, // Invalid weekOfMonth
-                frequency: 1,
-              ),
-          throwsA(isA<ArgumentError>()));
-    });
-
-    test('accepts valid values including -1 for last occurrence', () {
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: DateTime.monday,
-                weekOfMonth: -1, // Last occurrence
-                frequency: 1,
-              ),
-          returnsNormally);
-
-      expect(
-          () => MonthlyWeekday(
-                startDate: DateTime(2023, 1, 1),
-                weekday: DateTime.friday,
-                weekOfMonth: 5, // Fifth occurrence
-                frequency: 2,
-              ),
-          returnsNormally);
-    });
-
-    group('#occursOn', () {
-      test('is false on the start date if it is not the correct weekday', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01), // Sunday
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        expect(schedule.occursOn(DateTime(2023, 01, 01)), isFalse);
-      });
-
-      test('is true on the start date if it matches the pattern', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 02), // Monday
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
-      });
-
-      test('correctly identifies first Monday of each month', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        // January 2023: First Monday is Jan 2
-        expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
-        expect(schedule.occursOn(DateTime(2023, 01, 09)),
-            isFalse); // Second Monday
-        expect(
-            schedule.occursOn(DateTime(2023, 01, 16)), isFalse); // Third Monday
-
-        // February 2023: First Monday is Feb 6
-        expect(schedule.occursOn(DateTime(2023, 02, 06)), isTrue);
-        expect(schedule.occursOn(DateTime(2023, 02, 13)),
-            isFalse); // Second Monday
-      });
-
-      test('correctly identifies second Friday of each month', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.friday,
-          weekOfMonth: 2,
-          frequency: 1,
-        );
-
-        // January 2023: First Friday is Jan 6, second is Jan 13
-        expect(
-            schedule.occursOn(DateTime(2023, 01, 06)), isFalse); // First Friday
-        expect(
-            schedule.occursOn(DateTime(2023, 01, 13)), isTrue); // Second Friday
-        expect(
-            schedule.occursOn(DateTime(2023, 01, 20)), isFalse); // Third Friday
-
-        // February 2023: First Friday is Feb 3, second is Feb 10
-        expect(
-            schedule.occursOn(DateTime(2023, 02, 03)), isFalse); // First Friday
-        expect(
-            schedule.occursOn(DateTime(2023, 02, 10)), isTrue); // Second Friday
-      });
-
-      test('correctly identifies last Friday of each month', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.friday,
-          weekOfMonth: -1, // Last occurrence
-          frequency: 1,
-        );
-
-        // January 2023: Last Friday is Jan 27
-        expect(schedule.occursOn(DateTime(2023, 01, 27)), isTrue);
-        expect(schedule.occursOn(DateTime(2023, 01, 20)), isFalse); // Not last
-        expect(schedule.occursOn(DateTime(2023, 01, 13)), isFalse); // Not last
-
-        // February 2023: Last Friday is Feb 24
-        expect(schedule.occursOn(DateTime(2023, 02, 24)), isTrue);
-        expect(schedule.occursOn(DateTime(2023, 02, 17)), isFalse); // Not last
-      });
-
-      test('correctly identifies fifth Friday when it exists', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.friday,
-          weekOfMonth: 5,
-          frequency: 1,
-        );
-
-        // March 2023: Has 5 Fridays (3, 10, 17, 24, 31)
-        expect(
-            schedule.occursOn(DateTime(2023, 03, 31)), isTrue); // Fifth Friday
-        expect(schedule.occursOn(DateTime(2023, 03, 24)),
-            isFalse); // Fourth Friday
-
-        // April 2023: Only has 4 Fridays, so no fifth Friday
-        expect(schedule.occursOn(DateTime(2023, 04, 28)),
-            isFalse); // Last Friday in April
-      });
-
-      test('respects frequency parameter', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 2, // Every 2 months
-        );
-
-        // January 2023: Should occur (month 0)
-        expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
-
-        // February 2023: Should not occur (month 1)
-        expect(schedule.occursOn(DateTime(2023, 02, 06)), isFalse);
-
-        // March 2023: Should occur (month 2)
-        expect(schedule.occursOn(DateTime(2023, 03, 06)), isTrue);
-
-        // April 2023: Should not occur (month 3)
-        expect(schedule.occursOn(DateTime(2023, 04, 03)), isFalse);
-      });
-
-      test('is false before the start date', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        expect(schedule.occursOn(DateTime(2022, 12, 05)), isFalse);
-        expect(schedule.occursOn(DateTime(2022, 12, 31)), isFalse);
-      });
-
-      test('is false after the end date', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          endDate: DateTime(2023, 03, 31),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        expect(schedule.occursOn(DateTime(2023, 04, 03)), isFalse);
-        expect(schedule.occursOn(DateTime(2023, 12, 04)), isFalse);
-      });
-
-      test('is false on wrong weekday', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        // First Tuesday of January 2023
-        expect(schedule.occursOn(DateTime(2023, 01, 03)), isFalse);
-        // First Wednesday of January 2023
-        expect(schedule.occursOn(DateTime(2023, 01, 04)), isFalse);
-      });
-    });
-
-    group('#getNextNOccurrences', () {
-      test('returns correct first Monday occurrences', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences.length, equals(3));
-        expect(occurrences[0],
-            equals(DateTime(2023, 01, 02))); // First Monday of Jan
-        expect(occurrences[1],
-            equals(DateTime(2023, 02, 06))); // First Monday of Feb
-        expect(occurrences[2],
-            equals(DateTime(2023, 03, 06))); // First Monday of Mar
-      });
-
-      test('returns correct last Friday occurrences', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.friday,
-          weekOfMonth: -1, // Last occurrence
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences.length, equals(3));
-        expect(occurrences[0],
-            equals(DateTime(2023, 01, 27))); // Last Friday of Jan
-        expect(occurrences[1],
-            equals(DateTime(2023, 02, 24))); // Last Friday of Feb
-        expect(occurrences[2],
-            equals(DateTime(2023, 03, 31))); // Last Friday of Mar
-      });
-
-      test('respects frequency parameter', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 2, // Every 2 months
-        );
-
-        final occurrences = schedule.getNextNOccurrences(3).toList();
-
-        expect(occurrences.length, equals(3));
-        expect(occurrences[0], equals(DateTime(2023, 01, 02))); // January
-        expect(occurrences[1],
-            equals(DateTime(2023, 03, 06))); // March (skipped Feb)
-        expect(occurrences[2],
-            equals(DateTime(2023, 05, 01))); // May (skipped Apr)
-      });
-
-      test('handles from parameter correctly', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences = schedule
-            .getNextNOccurrences(2, from: DateTime(2023, 03, 01))
-            .toList();
-
-        expect(occurrences.length, equals(2));
-        expect(occurrences[0],
-            equals(DateTime(2023, 03, 06))); // First Monday of Mar
-        expect(occurrences[1],
-            equals(DateTime(2023, 04, 03))); // First Monday of Apr
-      });
-
-      test('excludes specified dates', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final exclude = [DateTime(2023, 02, 06)]; // First Monday of February
-        final occurrences =
-            schedule.getNextNOccurrences(3, exclude: exclude).toList();
-
-        expect(occurrences.length, equals(3));
-        expect(occurrences[0],
-            equals(DateTime(2023, 01, 02))); // First Monday of Jan
-        expect(
-            occurrences[1],
-            equals(
-                DateTime(2023, 03, 06))); // First Monday of Mar (Feb excluded)
-        expect(occurrences[2],
-            equals(DateTime(2023, 04, 03))); // First Monday of Apr
-      });
-    });
-
-    group('#getOccurrencesUntil', () {
-      test('returns all occurrences within date range', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
-
-        expect(occurrences.length, equals(3));
-        expect(occurrences[0],
-            equals(DateTime(2023, 01, 02))); // First Monday of Jan
-        expect(occurrences[1],
-            equals(DateTime(2023, 02, 06))); // First Monday of Feb
-        expect(occurrences[2],
-            equals(DateTime(2023, 03, 06))); // First Monday of Mar
-      });
-
-      test('returns empty list when end date is before start date', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
-        expect(occurrences, isEmpty);
-      });
-
-      test('respects from parameter', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences = schedule
-            .getOccurrencesUntil(
-              DateTime(2023, 04, 01),
-              from: DateTime(2023, 02, 01),
-            )
-            .toList();
-
-        expect(occurrences.length, equals(2));
-        expect(occurrences[0],
-            equals(DateTime(2023, 02, 06))); // First Monday of Feb
-        expect(occurrences[1],
-            equals(DateTime(2023, 03, 06))); // First Monday of Mar
-      });
-
-      test('excludes specified dates', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final exclude = [DateTime(2023, 02, 06)]; // First Monday of February
-        final occurrences = schedule
-            .getOccurrencesUntil(
-              DateTime(2023, 04, 01),
-              exclude: exclude,
-            )
-            .toList();
-
-        expect(occurrences.length, equals(2));
-        expect(occurrences[0],
-            equals(DateTime(2023, 01, 02))); // First Monday of Jan
-        expect(
-            occurrences[1],
-            equals(
-                DateTime(2023, 03, 06))); // First Monday of Mar (Feb excluded)
-      });
-    });
-
-    group('Edge cases', () {
-      test('handles months with different numbers of weekdays', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 01),
-          weekday: DateTime.friday,
-          weekOfMonth: 5, // Fifth Friday
-          frequency: 1,
-        );
-
-        // March 2023 has 5 Fridays, April 2023 has 4 Fridays
-        final marchOccurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
-        expect(marchOccurrences.length, equals(1));
-        expect(marchOccurrences[0],
-            equals(DateTime(2023, 03, 31))); // Fifth Friday of March
-
-        final aprilOccurrences =
-            schedule.getOccurrencesUntil(DateTime(2023, 05, 01)).toList();
-        expect(
-            aprilOccurrences.length, equals(1)); // Still only March occurrence
-      });
-
-      test('handles leap year February correctly', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2024, 01, 01), // 2024 is a leap year
-          weekday: DateTime.thursday,
-          weekOfMonth: 5, // Fifth Thursday
-          frequency: 1,
-        );
-
-        // February 2024 has 5 Thursdays due to leap year
-        final occurrences =
-            schedule.getOccurrencesUntil(DateTime(2024, 03, 01)).toList();
-        expect(occurrences.length, equals(1));
-        expect(occurrences[0],
-            equals(DateTime(2024, 02, 29))); // Fifth Thursday of February 2024
-      });
-
-      test('handles start date that is not the first day of month', () {
-        final schedule = MonthlyWeekday(
-          startDate: DateTime(2023, 01, 15), // Start mid-month
-          weekday: DateTime.monday,
-          weekOfMonth: 1,
-          frequency: 1,
-        );
-
-        final occurrences = schedule.getNextNOccurrences(2).toList();
-        expect(occurrences.length, equals(2));
-        expect(occurrences[0],
-            equals(DateTime(2023, 02, 06))); // First Monday of Feb
-        expect(occurrences[1],
-            equals(DateTime(2023, 03, 06))); // First Monday of Mar
-      });
     });
   });
 }
