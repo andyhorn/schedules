@@ -73,7 +73,7 @@ sealed class Schedule {
       return timesOfDay.any((scheduledTime) => scheduledTime == timeOfDay);
     }
 
-    return false;
+    return true;
   }
 
   /// Generates timed occurrences for a given date.

@@ -9,6 +9,7 @@ A pure-Dart package for generating and managing recurring events.
 - Determine if an event occurs on a specific day
 - Generate a list of _n_ events
 - Generate a list of events until _x_ date
+- Schedule events at specific times of day with `TimeOfDay` class
 - Math-based algorithms for better performance
 
 **Schedule Types**
@@ -18,6 +19,141 @@ A pure-Dart package for generating and managing recurring events.
   - Monthly: An event that occurs on one or more days every _n_ months
   - MonthlyWeekday: An event that occurs on the _x_th_ weekday every _n_ months
   - Yearly: An event that occurs on a particular date every _n_ years
+
+## Time Support
+
+The schedules package supports scheduling events at specific times of day using the `TimeOfDay` class and timed schedule constructors.
+
+### TimeOfDay Class
+
+The `TimeOfDay` class represents a specific time of day with hour, minute, second, and millisecond precision:
+
+```dart
+// Create a TimeOfDay for 9:30 AM
+final morningTime = TimeOfDay(hour: 9, minute: 30);
+
+// Create a TimeOfDay for 2:15:30 PM with milliseconds
+final afternoonTime = TimeOfDay(
+  hour: 14, 
+  minute: 15, 
+  second: 30, 
+  millisecond: 500,
+);
+
+// Create from an existing DateTime
+final now = DateTime.now();
+final currentTime = TimeOfDay.fromDateTime(now);
+
+// Or use the `toTimeOfDay` extension
+final currentTime = DateTime.now().toTimeOfDay();
+```
+
+**TimeOfDay Validation:**
+- Hour: 0-23 (24-hour format)
+- Minute: 0-59
+- Second: 0-59 (default: 0)
+- Millisecond: 0-999 (default: 0)
+
+### Timed Schedules
+
+All schedule types support timed scheduling using `.timed()` constructors. Timed schedules can have multiple times per day (excluding Singular, which only supports 0 or 1):
+
+```dart
+// Daily medication at 8 AM, 2 PM, and 8 PM
+final medication = Daily.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  timesOfDay: [
+    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
+    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
+    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  ],
+);
+
+// Weekly team meetings on Monday and Wednesday at 10:30 AM
+final meetings = Weekly.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  weekdays: [DateTime.monday, DateTime.wednesday],
+  timesOfDay: [TimeOfDay(hour: 10, minute: 30)],
+);
+
+// Monthly board meeting on the 1st at 3:00 PM
+final boardMeeting = Monthly.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  days: [1],
+  timesOfDay: [TimeOfDay(hour: 15, minute: 0)],
+);
+```
+
+### Time-Related API Methods
+
+Timed schedules provide additional methods for time-specific operations:
+
+```dart
+final schedule = Daily.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+);
+
+// Check if schedule is timed
+print(schedule.isTimed); // true
+
+// Check if schedule occurs at a specific time
+print(schedule.occursAt(TimeOfDay(hour: 9, minute: 30))); // true
+print(schedule.occursAt(TimeOfDay(hour: 10, minute: 0)));  // false
+
+// Get timed occurrences (returns DateTime instances with specific times)
+final occurrences = schedule.getNextNOccurrences(3).toList();
+// Returns: [2023-01-01 09:30:00, 2023-01-02 09:30:00, 2023-01-03 09:30:00]
+```
+
+**Important Note about `occursAt` Behavior:**
+
+- **Timed schedules**: `occursAt(TimeOfDay)` returns `true` only for the specific times configured in the schedule
+- **UnTimed schedules**: `occursAt(TimeOfDay)` returns `true` for any time of day, as these represent "all-day" events
+
+```dart
+// UnTimed schedule (all-day event)
+final allDayEvent = Daily(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+);
+
+print(allDayEvent.isTimed); // false
+print(allDayEvent.occursAt(TimeOfDay(hour: 8, minute: 0)));  // true
+print(allDayEvent.occursAt(TimeOfDay(hour: 12, minute: 30))); // true
+print(allDayEvent.occursAt(TimeOfDay(hour: 23, minute: 59))); // true
+
+// Timed schedule (specific times)
+final timedEvent = Daily.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  timesOfDay: [TimeOfDay(hour: 9, minute: 0)],
+);
+
+print(timedEvent.isTimed); // true
+print(timedEvent.occursAt(TimeOfDay(hour: 8, minute: 0)));  // false
+print(timedEvent.occursAt(TimeOfDay(hour: 9, minute: 0)));  // true
+print(timedEvent.occursAt(TimeOfDay(hour: 12, minute: 30))); // false
+```
+
+### DateTime Extensions
+
+The package provides helpful extensions for working with times:
+
+```dart
+final date = DateTime(2023, 6, 15);
+
+// Convert DateTime to TimeOfDay
+final timeOfDay = date.toTimeOfDay();
+
+// Create DateTime with specific time
+final specificTime = date.withTimeOfDay(TimeOfDay(hour: 14, minute: 30));
+// Returns: 2023-06-15 14:30:00
+```
 
 ## Getting Started
 
@@ -64,6 +200,17 @@ final daily = Daily(
   startDate: DateTime(2023, 01, 01),
   frequency: 2,
 );
+
+// Daily medication at 8 AM, 2 PM, and 8 PM
+final medication = Daily.timed(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  timesOfDay: [
+    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
+    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
+    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  ],
+);
 ```
 
 #### Weekly
@@ -78,6 +225,14 @@ final weekly = Weekly(
   frequency: 2,
   weekdays: [DateTime.monday, DateTime.thursday],
 );
+
+// Weekly team meetings on Monday and Wednesday at 10:30 AM
+final meetings = Weekly.timed(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  weekdays: [DateTime.monday, DateTime.wednesday],
+  timesOfDay: [TimeOfDay(hour: 10, minute: 30)],
+);
 ```
 
 #### Monthly
@@ -91,6 +246,14 @@ final monthly = Monthly(
   startDate: DateTime(2023, 01, 01),
   frequency: 1,
   days: [1, 15],
+);
+
+// Monthly board meeting on the 1st at 3:00 PM
+final boardMeeting = Monthly.timed(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  days: [1],
+  timesOfDay: [TimeOfDay(hour: 15, minute: 0)],
 );
 ```
 
@@ -123,6 +286,15 @@ final thirdThursday = MonthlyWeekday(
   weekday: DateTime.thursday,
   weekOfMonth: 3,
 );
+
+// First Monday of every month at 9:00 AM
+final firstMondayMeeting = MonthlyWeekday.timed(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  weekday: DateTime.monday,
+  weekOfMonth: 1,
+  timesOfDay: [TimeOfDay(hour: 9, minute: 0)],
+);
 ```
 
 **Parameters:**
@@ -148,6 +320,13 @@ Repeats every _n_ years on the specified date:
 final yearly = Yearly(
   startDate: DateTime(2023, 01, 01),
   frequency: 3,
+);
+
+// Annual company meeting on January 1st at 2:00 PM
+final annualMeeting = Yearly.timed(
+  startDate: DateTime(2023, 01, 01),
+  frequency: 1,
+  timesOfDay: [TimeOfDay(hour: 14, minute: 0)],
 );
 ```
 
@@ -237,6 +416,12 @@ All schedule types provide these methods:
 - `getNextNOccurrences(int n, {DateTime? from, Iterable<DateTime>? exclude})` - Get the next N occurrences
 - `getOccurrencesUntil(DateTime end, {DateTime? from, Iterable<DateTime>? exclude})` - Get all occurrences until a specific date
 
+**Timed Schedule Methods:**
+- `isTimed` - Check if the schedule has specific times
+- `occursAt(TimeOfDay timeOfDay)` - Check if the schedule occurs at a specific time of day
+- For **Timed schedules**: Returns `true` only for configured times
+- For **UnTimed schedules**: Returns `true` for any time (all-day events)
+
 ## Concrete Examples
 
 ### Payday Schedule
@@ -280,6 +465,32 @@ if (medication.occursOn(today)) {
 // Get next 3 medication days
 final nextDoses = medication.getNextNOccurrences(3);
 // Output: [2023-01-01, 2023-01-02, 2023-01-03]
+```
+
+### Timed Medication Schedule
+```dart
+// Take medication 3 times daily at specific times
+final timedMedication = Daily.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  timesOfDay: [
+    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
+    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
+    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  ],
+);
+
+// Check if it's time for medication
+final now = DateTime.now();
+if (timedMedication.occursOn(now) && 
+    timedMedication.occursAt(now.toTimeOfDay())) {
+  print('Time to take your medication!');
+}
+
+// Get next 6 medication times
+final nextDoses = timedMedication.getNextNOccurrences(6).toList();
+// Output: [2023-01-01 08:00:00, 2023-01-01 14:00:00, 2023-01-01 20:00:00,
+//          2023-01-02 08:00:00, 2023-01-02 14:00:00, 2023-01-02 20:00:00]
 ```
 
 ### Bill Due Dates
@@ -386,6 +597,38 @@ final workDaysJan = workDays.getOccurrencesUntil(
 
 // Contains: [2023-01-03 (Tue), 2023-01-04 (Wed), 2023-01-05 (Thu), 2023-01-06 (Fri),
 //           2023-01-09 (Mon), 2023-01-10 (Tue), 2023-01-11 (Wed), 2023-01-12 (Thu)]
+```
+
+### All-Day vs Timed Events
+```dart
+// All-day event (birthday, holiday, deadline)
+final birthday = Daily(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 365, // Every year
+);
+
+// Check if it's time for birthday celebration
+final now = DateTime.now();
+if (birthday.occursOn(now)) {
+  // This will be true for any time during the birthday
+  if (birthday.occursAt(now.toTimeOfDay())) {
+    print('Happy Birthday! 🎉');
+  }
+}
+
+// Timed event (meeting, appointment)
+final meeting = Daily.timed(
+  startDate: DateTime(2023, 1, 1),
+  frequency: 1,
+  timesOfDay: [TimeOfDay(hour: 14, minute: 0)], // 2:00 PM
+);
+
+// Check if it's meeting time
+if (meeting.occursOn(now) && meeting.occursAt(now.toTimeOfDay())) {
+  print('Time for the meeting!');
+} else if (meeting.occursOn(now)) {
+  print('Meeting day, but not meeting time yet');
+}
 ```
 
 ## License

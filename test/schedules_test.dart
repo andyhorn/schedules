@@ -121,6 +121,26 @@ void main() {
           expect(occurrences, [DateTime(2023, 01, 01)]);
         });
       });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Singular(date: DateTime(2023, 1, 1));
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Singular(date: DateTime(2023, 1, 1));
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
+        });
+      });
     });
 
     group(Daily, () {
@@ -655,6 +675,57 @@ void main() {
           });
         });
       });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('returns true for any time of day regardless of frequency', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 3, // Every 3 days
+          );
+
+          // Even with frequency > 1, UnTimed schedules should return true for any time
+          expect(schedule.occursAt(TimeOfDay(hour: 8, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 15, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 22, minute: 15)), isTrue);
+        });
+
+        test('returns true for any time of day with end date', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            endDate: DateTime(2023, 1, 10),
+            frequency: 1,
+          );
+
+          // UnTimed schedules with end date should still return true for any time
+          expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 16, minute: 45)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 21, minute: 30)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
+        });
+      });
     });
 
     group(Weekly, () {
@@ -1105,6 +1176,34 @@ void main() {
             expect(occurrences[3],
                 equals(DateTime(2023, 1, 11, 9, 30))); // Next Wednesday
           });
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Weekly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            weekdays: [DateTime.monday],
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
@@ -1608,6 +1707,34 @@ void main() {
             expect(occurrences[2], equals(DateTime(2023, 2, 1, 9, 30)));
             expect(occurrences[3], equals(DateTime(2023, 2, 15, 9, 30)));
           });
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            days: [1, 15],
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Monthly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+            days: [1, 15],
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
@@ -2597,6 +2724,32 @@ void main() {
           expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
           expect(occurrences[1], equals(DateTime(2024, 1, 1, 9, 30)));
           expect(occurrences[2], equals(DateTime(2025, 1, 1, 9, 30)));
+        });
+      });
+
+      group('#occursAt', () {
+        test('returns true for any time of day for UnTimed schedules', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          // UnTimed schedules should return true for any time of day
+          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+        });
+
+        test('isTimed returns false for UnTimed schedules', () {
+          final schedule = Yearly(
+            startDate: DateTime(2023, 1, 1),
+            frequency: 1,
+          );
+
+          expect(schedule.isTimed, isFalse);
+          expect(schedule.timingMode, isA<UnTimed>());
         });
       });
     });
