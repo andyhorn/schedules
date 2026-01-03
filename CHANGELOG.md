@@ -1,3 +1,9 @@
+## 2.0.0
+
+As well as the breaking change below, I should have bumped to 2.0.0 when I added the `MonthlyWeekday` schedule, as this broke any exhaustive pattern matching. My apologies.
+
+- Rename `TimeOfDay` to `ClockTime` to help avoid collisions with Material's `TimeOfDay`.
+
 ## 1.3.0
 - Add support for timed events
   - Add a new `TimeOfDay` class

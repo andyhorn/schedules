@@ -19,11 +19,11 @@ class Singular extends Schedule {
   /// Creates a singular schedule that occurs on the given date at the given time.
   factory Singular.timed({
     required DateTime date,
-    required TimeOfDay timeOfDay,
+    required ClockTime clockTime,
   }) {
     return Singular._internal(
       startDate: date,
-      timingMode: Timed(timesOfDay: [timeOfDay]),
+      timingMode: Timed(clockTimes: [clockTime]),
     );
   }
 

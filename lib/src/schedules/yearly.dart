@@ -34,18 +34,18 @@ class Yearly extends Schedule {
     );
   }
 
-  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate] at the given [timesOfDay].
+  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate] at the given [clockTimes].
   factory Yearly.timed({
     required DateTime startDate,
     required int frequency,
-    required Iterable<TimeOfDay> timesOfDay,
+    required Iterable<ClockTime> clockTimes,
     DateTime? endDate,
   }) {
     return Yearly._internal(
       startDate: startDate,
       frequency: frequency,
       endDate: endDate,
-      timingMode: Timed(timesOfDay: timesOfDay),
+      timingMode: Timed(clockTimes: clockTimes),
     );
   }
 

@@ -35,18 +35,18 @@ class Daily extends Schedule {
     );
   }
 
-  /// Creates a daily schedule that occurs every [frequency] days at the given [timesOfDay].
+  /// Creates a daily schedule that occurs every [frequency] days at the given [clockTimes].
   factory Daily.timed({
     required DateTime startDate,
     required int frequency,
-    required Iterable<TimeOfDay> timesOfDay,
+    required Iterable<ClockTime> clockTimes,
     DateTime? endDate,
   }) {
     return Daily._internal(
       startDate: startDate,
       frequency: frequency,
       endDate: endDate,
-      timingMode: Timed(timesOfDay: timesOfDay),
+      timingMode: Timed(clockTimes: clockTimes),
     );
   }
 

@@ -127,11 +127,11 @@ void main() {
           final schedule = Singular(date: DateTime(2023, 1, 1));
 
           // UnTimed schedules should return true for any time of day
-          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
         });
 
         test('isTimed returns false for UnTimed schedules', () {
@@ -441,44 +441,44 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.isTimed, isTrue);
             expect(schedule.timingMode, isA<Timed>());
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 10, minute: 30)), isFalse);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 10, minute: 30)), isFalse);
           });
 
           test('creates timed daily schedule with multiple times', () {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [
-                TimeOfDay(hour: 9, minute: 30),
-                TimeOfDay(hour: 14, minute: 0),
-                TimeOfDay(hour: 18, minute: 45),
+              clockTimes: [
+                ClockTime(hour: 9, minute: 30),
+                ClockTime(hour: 14, minute: 0),
+                ClockTime(hour: 18, minute: 45),
               ],
             );
 
             expect(schedule.isTimed, isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 14, minute: 0)), isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 0)), isFalse);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 14, minute: 0)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 12, minute: 0)), isFalse);
           });
 
-          test('throws ArgumentError for empty timesOfDay', () {
+          test('throws ArgumentError for empty clockTimes', () {
             expect(
               () => Daily.timed(
                 startDate: DateTime(2023, 1, 1),
                 frequency: 1,
-                timesOfDay: [],
+                clockTimes: [],
               ),
               throwsA(isA<ArgumentError>().having(
                 (e) => e.message,
                 'message',
-                contains('Times of day list cannot be empty'),
+                contains('Clock times list cannot be empty'),
               )),
             );
           });
@@ -488,7 +488,7 @@ void main() {
               () => Daily.timed(
                 startDate: DateTime(2023, 1, 1),
                 frequency: 0,
-                timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+                clockTimes: [ClockTime(hour: 9, minute: 30)],
               ),
               throwsA(isA<ArgumentError>().having(
                 (e) => e.message,
@@ -504,25 +504,25 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [
-                TimeOfDay(hour: 9, minute: 30),
-                TimeOfDay(hour: 14, minute: 0),
+              clockTimes: [
+                ClockTime(hour: 9, minute: 30),
+                ClockTime(hour: 14, minute: 0),
               ],
             );
 
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
-            expect(schedule.occursAt(TimeOfDay(hour: 14, minute: 0)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 14, minute: 0)), isTrue);
           });
 
           test('returns false for non-scheduled times', () {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
-            expect(schedule.occursAt(TimeOfDay(hour: 10, minute: 30)), isFalse);
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 31)), isFalse);
+            expect(schedule.occursAt(ClockTime(hour: 10, minute: 30)), isFalse);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 31)), isFalse);
           });
         });
 
@@ -531,7 +531,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 2,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
@@ -544,7 +544,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 2,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
@@ -557,7 +557,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(3).toList();
@@ -572,9 +572,9 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [
-                TimeOfDay(hour: 9, minute: 30),
-                TimeOfDay(hour: 14, minute: 0),
+              clockTimes: [
+                ClockTime(hour: 9, minute: 30),
+                ClockTime(hour: 14, minute: 0),
               ],
             );
 
@@ -591,7 +591,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 2,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(3).toList();
@@ -606,7 +606,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule
@@ -622,7 +622,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(
@@ -642,7 +642,7 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences =
@@ -658,9 +658,9 @@ void main() {
             final schedule = Daily.timed(
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
-              timesOfDay: [
-                TimeOfDay(hour: 9, minute: 30),
-                TimeOfDay(hour: 14, minute: 0),
+              clockTimes: [
+                ClockTime(hour: 9, minute: 30),
+                ClockTime(hour: 14, minute: 0),
               ],
             );
 
@@ -684,11 +684,11 @@ void main() {
           );
 
           // UnTimed schedules should return true for any time of day
-          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
         });
 
         test('returns true for any time of day regardless of frequency', () {
@@ -698,9 +698,9 @@ void main() {
           );
 
           // Even with frequency > 1, UnTimed schedules should return true for any time
-          expect(schedule.occursAt(TimeOfDay(hour: 8, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 15, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 22, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 8, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 15, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 22, minute: 15)), isTrue);
         });
 
         test('returns true for any time of day with end date', () {
@@ -711,9 +711,9 @@ void main() {
           );
 
           // UnTimed schedules with end date should still return true for any time
-          expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 16, minute: 45)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 21, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 9, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 16, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 21, minute: 30)), isTrue);
         });
 
         test('isTimed returns false for UnTimed schedules', () {
@@ -1113,26 +1113,26 @@ void main() {
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.isTimed, isTrue);
             expect(schedule.timingMode, isA<Timed>());
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
           });
 
-          test('throws ArgumentError for empty timesOfDay', () {
+          test('throws ArgumentError for empty clockTimes', () {
             expect(
               () => Weekly.timed(
                 startDate: DateTime(2023, 1, 1),
                 frequency: 1,
                 weekdays: [DateTime.monday],
-                timesOfDay: [],
+                clockTimes: [],
               ),
               throwsA(isA<ArgumentError>().having(
                 (e) => e.message,
                 'message',
-                contains('Times of day list cannot be empty'),
+                contains('Clock times list cannot be empty'),
               )),
             );
           });
@@ -1144,7 +1144,7 @@ void main() {
               startDate: DateTime(2023, 1, 1), // Sunday
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.occursOn(DateTime(2023, 1, 2)), isTrue); // Monday
@@ -1161,7 +1161,7 @@ void main() {
               startDate: DateTime(2023, 1, 1), // Sunday
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(4).toList();
@@ -1188,11 +1188,11 @@ void main() {
           );
 
           // UnTimed schedules should return true for any time of day
-          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
         });
 
         test('isTimed returns false for UnTimed schedules', () {
@@ -1663,12 +1663,12 @@ void main() {
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
               days: [1, 15],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.isTimed, isTrue);
             expect(schedule.timingMode, isA<Timed>());
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
           });
         });
 
@@ -1678,7 +1678,7 @@ void main() {
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
               days: [1, 15],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
@@ -1696,7 +1696,7 @@ void main() {
               startDate: DateTime(2023, 1, 1),
               frequency: 1,
               days: [1, 15],
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(4).toList();
@@ -1719,11 +1719,11 @@ void main() {
           );
 
           // UnTimed schedules should return true for any time of day
-          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
         });
 
         test('isTimed returns false for UnTimed schedules', () {
@@ -2224,12 +2224,12 @@ void main() {
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             expect(schedule.isTimed, isTrue);
             expect(schedule.timingMode, isA<Timed>());
-            expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
           });
         });
 
@@ -2240,7 +2240,7 @@ void main() {
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             // First Monday of January 2023 is January 2
@@ -2261,7 +2261,7 @@ void main() {
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
-              timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+              clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
             final occurrences = schedule.getNextNOccurrences(3).toList();
@@ -2686,12 +2686,12 @@ void main() {
           final schedule = Yearly.timed(
             startDate: DateTime(2023, 1, 1),
             frequency: 1,
-            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
 
           expect(schedule.isTimed, isTrue);
           expect(schedule.timingMode, isA<Timed>());
-          expect(schedule.occursAt(TimeOfDay(hour: 9, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
         });
       });
 
@@ -2700,7 +2700,7 @@ void main() {
           final schedule = Yearly.timed(
             startDate: DateTime(2023, 1, 1),
             frequency: 1,
-            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
 
           expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
@@ -2715,7 +2715,7 @@ void main() {
           final schedule = Yearly.timed(
             startDate: DateTime(2023, 1, 1),
             frequency: 1,
-            timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+            clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
 
           final occurrences = schedule.getNextNOccurrences(3).toList();
@@ -2735,11 +2735,11 @@ void main() {
           );
 
           // UnTimed schedules should return true for any time of day
-          expect(schedule.occursAt(TimeOfDay(hour: 0, minute: 0)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 12, minute: 30)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 23, minute: 59)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 6, minute: 15)), isTrue);
-          expect(schedule.occursAt(TimeOfDay(hour: 18, minute: 45)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 12, minute: 30)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 23, minute: 59)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 6, minute: 15)), isTrue);
+          expect(schedule.occursAt(ClockTime(hour: 18, minute: 45)), isTrue);
         });
 
         test('isTimed returns false for UnTimed schedules', () {
@@ -2971,10 +2971,10 @@ void main() {
         final schedule = Daily.timed(
           startDate: DateTime(2023, 1, 1),
           frequency: 1,
-          timesOfDay: [
-            TimeOfDay(hour: 8, minute: 0),
-            TimeOfDay(hour: 12, minute: 0),
-            TimeOfDay(hour: 18, minute: 0),
+          clockTimes: [
+            ClockTime(hour: 8, minute: 0),
+            ClockTime(hour: 12, minute: 0),
+            ClockTime(hour: 18, minute: 0),
           ],
         );
 
@@ -2993,8 +2993,8 @@ void main() {
         final schedule = Daily.timed(
           startDate: DateTime(2023, 1, 1),
           frequency: 1,
-          timesOfDay: [
-            TimeOfDay(hour: 9, minute: 30, second: 45, millisecond: 123),
+          clockTimes: [
+            ClockTime(hour: 9, minute: 30, second: 45, millisecond: 123),
           ],
         );
 
@@ -3009,7 +3009,7 @@ void main() {
         final schedule = Daily.timed(
           startDate: DateTime(2023, 1, 1),
           frequency: 1,
-          timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          clockTimes: [ClockTime(hour: 9, minute: 30)],
           endDate: DateTime(2023, 1, 2),
         );
 
@@ -3025,7 +3025,7 @@ void main() {
         final schedule = Daily.timed(
           startDate: DateTime(2023, 1, 1),
           frequency: 1,
-          timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+          clockTimes: [ClockTime(hour: 9, minute: 30)],
         );
 
         final occurrences = schedule.getNextNOccurrences(

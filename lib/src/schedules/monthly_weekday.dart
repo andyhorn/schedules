@@ -58,13 +58,13 @@ class MonthlyWeekday extends Schedule {
     );
   }
 
-  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth] at the given [timesOfDay].
+  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth] at the given [clockTimes].
   factory MonthlyWeekday.timed({
     required DateTime startDate,
     required int frequency,
     required int weekday,
     required int weekOfMonth,
-    required Iterable<TimeOfDay> timesOfDay,
+    required Iterable<ClockTime> clockTimes,
     DateTime? endDate,
   }) {
     return MonthlyWeekday._internal(
@@ -73,7 +73,7 @@ class MonthlyWeekday extends Schedule {
       frequency: frequency,
       weekday: weekday,
       weekOfMonth: weekOfMonth,
-      timingMode: Timed(timesOfDay: timesOfDay),
+      timingMode: Timed(clockTimes: clockTimes),
     );
   }
 

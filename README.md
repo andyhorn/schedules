@@ -9,7 +9,7 @@ A pure-Dart package for generating and managing recurring events.
 - Determine if an event occurs on a specific day
 - Generate a list of _n_ events
 - Generate a list of events until _x_ date
-- Schedule events at specific times of day with `TimeOfDay` class
+- Schedule events at specific times of day with `ClockTime` class
 - Math-based algorithms for better performance
 
 **Schedule Types**
@@ -22,18 +22,18 @@ A pure-Dart package for generating and managing recurring events.
 
 ## Time Support
 
-The schedules package supports scheduling events at specific times of day using the `TimeOfDay` class and timed schedule constructors.
+The schedules package supports scheduling events at specific times of day using the `ClockTime` class and timed schedule constructors.
 
-### TimeOfDay Class
+### ClockTime Class
 
-The `TimeOfDay` class represents a specific time of day with hour, minute, second, and millisecond precision:
+The `ClockTime` class represents a specific time of day with hour, minute, second, and millisecond precision:
 
 ```dart
-// Create a TimeOfDay for 9:30 AM
-final morningTime = TimeOfDay(hour: 9, minute: 30);
+// Create a ClockTime for 9:30 AM
+final morningTime = ClockTime(hour: 9, minute: 30);
 
-// Create a TimeOfDay for 2:15:30 PM with milliseconds
-final afternoonTime = TimeOfDay(
+// Create a ClockTime for 2:15:30 PM with milliseconds
+final afternoonTime = ClockTime(
   hour: 14, 
   minute: 15, 
   second: 30, 
@@ -42,13 +42,13 @@ final afternoonTime = TimeOfDay(
 
 // Create from an existing DateTime
 final now = DateTime.now();
-final currentTime = TimeOfDay.fromDateTime(now);
+final currentTime = ClockTime.fromDateTime(now);
 
-// Or use the `toTimeOfDay` extension
-final currentTime = DateTime.now().toTimeOfDay();
+// Or use the `toClockTime` extension
+final currentTime = DateTime.now().toClockTime();
 ```
 
-**TimeOfDay Validation:**
+**ClockTime Validation:**
 - Hour: 0-23 (24-hour format)
 - Minute: 0-59
 - Second: 0-59 (default: 0)
@@ -63,10 +63,10 @@ All schedule types support timed scheduling using `.timed()` constructors. Timed
 final medication = Daily.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
-  timesOfDay: [
-    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
-    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
-    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  clockTimes: [
+    ClockTime(hour: 8, minute: 0),   // 8:00 AM
+    ClockTime(hour: 14, minute: 0),  // 2:00 PM
+    ClockTime(hour: 20, minute: 0),  // 8:00 PM
   ],
 );
 
@@ -75,7 +75,7 @@ final meetings = Weekly.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
   weekdays: [DateTime.monday, DateTime.wednesday],
-  timesOfDay: [TimeOfDay(hour: 10, minute: 30)],
+  clockTimes: [ClockTime(hour: 10, minute: 30)],
 );
 
 // Monthly board meeting on the 1st at 3:00 PM
@@ -83,7 +83,7 @@ final boardMeeting = Monthly.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
   days: [1],
-  timesOfDay: [TimeOfDay(hour: 15, minute: 0)],
+  clockTimes: [ClockTime(hour: 15, minute: 0)],
 );
 ```
 
@@ -95,15 +95,15 @@ Timed schedules provide additional methods for time-specific operations:
 final schedule = Daily.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
-  timesOfDay: [TimeOfDay(hour: 9, minute: 30)],
+  clockTimes: [ClockTime(hour: 9, minute: 30)],
 );
 
 // Check if schedule is timed
 print(schedule.isTimed); // true
 
 // Check if schedule occurs at a specific time
-print(schedule.occursAt(TimeOfDay(hour: 9, minute: 30))); // true
-print(schedule.occursAt(TimeOfDay(hour: 10, minute: 0)));  // false
+print(schedule.occursAt(ClockTime(hour: 9, minute: 30))); // true
+print(schedule.occursAt(ClockTime(hour: 10, minute: 0)));  // false
 
 // Get timed occurrences (returns DateTime instances with specific times)
 final occurrences = schedule.getNextNOccurrences(3).toList();
@@ -112,8 +112,8 @@ final occurrences = schedule.getNextNOccurrences(3).toList();
 
 **Important Note about `occursAt` Behavior:**
 
-- **Timed schedules**: `occursAt(TimeOfDay)` returns `true` only for the specific times configured in the schedule
-- **UnTimed schedules**: `occursAt(TimeOfDay)` returns `true` for any time of day, as these represent "all-day" events
+- **Timed schedules**: `occursAt(ClockTime)` returns `true` only for the specific times configured in the schedule
+- **UnTimed schedules**: `occursAt(ClockTime)` returns `true` for any time of day, as these represent "all-day" events
 
 ```dart
 // UnTimed schedule (all-day event)
@@ -123,21 +123,21 @@ final allDayEvent = Daily(
 );
 
 print(allDayEvent.isTimed); // false
-print(allDayEvent.occursAt(TimeOfDay(hour: 8, minute: 0)));  // true
-print(allDayEvent.occursAt(TimeOfDay(hour: 12, minute: 30))); // true
-print(allDayEvent.occursAt(TimeOfDay(hour: 23, minute: 59))); // true
+print(allDayEvent.occursAt(ClockTime(hour: 8, minute: 0)));  // true
+print(allDayEvent.occursAt(ClockTime(hour: 12, minute: 30))); // true
+print(allDayEvent.occursAt(ClockTime(hour: 23, minute: 59))); // true
 
 // Timed schedule (specific times)
 final timedEvent = Daily.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
-  timesOfDay: [TimeOfDay(hour: 9, minute: 0)],
+  clockTimes: [ClockTime(hour: 9, minute: 0)],
 );
 
 print(timedEvent.isTimed); // true
-print(timedEvent.occursAt(TimeOfDay(hour: 8, minute: 0)));  // false
-print(timedEvent.occursAt(TimeOfDay(hour: 9, minute: 0)));  // true
-print(timedEvent.occursAt(TimeOfDay(hour: 12, minute: 30))); // false
+print(timedEvent.occursAt(ClockTime(hour: 8, minute: 0)));  // false
+print(timedEvent.occursAt(ClockTime(hour: 9, minute: 0)));  // true
+print(timedEvent.occursAt(ClockTime(hour: 12, minute: 30))); // false
 ```
 
 ### DateTime Extensions
@@ -147,11 +147,11 @@ The package provides helpful extensions for working with times:
 ```dart
 final date = DateTime(2023, 6, 15);
 
-// Convert DateTime to TimeOfDay
-final timeOfDay = date.toTimeOfDay();
+// Convert DateTime to ClockTime
+final clockTime = date.toClockTime();
 
 // Create DateTime with specific time
-final specificTime = date.withTimeOfDay(TimeOfDay(hour: 14, minute: 30));
+final specificTime = date.withClockTime(ClockTime(hour: 14, minute: 30));
 // Returns: 2023-06-15 14:30:00
 ```
 
@@ -205,10 +205,10 @@ final daily = Daily(
 final medication = Daily.timed(
   startDate: DateTime(2023, 01, 01),
   frequency: 1,
-  timesOfDay: [
-    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
-    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
-    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  clockTimes: [
+    ClockTime(hour: 8, minute: 0),   // 8:00 AM
+    ClockTime(hour: 14, minute: 0),  // 2:00 PM
+    ClockTime(hour: 20, minute: 0),  // 8:00 PM
   ],
 );
 ```
@@ -231,7 +231,7 @@ final meetings = Weekly.timed(
   startDate: DateTime(2023, 01, 01),
   frequency: 1,
   weekdays: [DateTime.monday, DateTime.wednesday],
-  timesOfDay: [TimeOfDay(hour: 10, minute: 30)],
+  clockTimes: [ClockTime(hour: 10, minute: 30)],
 );
 ```
 
@@ -253,7 +253,7 @@ final boardMeeting = Monthly.timed(
   startDate: DateTime(2023, 01, 01),
   frequency: 1,
   days: [1],
-  timesOfDay: [TimeOfDay(hour: 15, minute: 0)],
+  clockTimes: [ClockTime(hour: 15, minute: 0)],
 );
 ```
 
@@ -293,7 +293,7 @@ final firstMondayMeeting = MonthlyWeekday.timed(
   frequency: 1,
   weekday: DateTime.monday,
   weekOfMonth: 1,
-  timesOfDay: [TimeOfDay(hour: 9, minute: 0)],
+  clockTimes: [ClockTime(hour: 9, minute: 0)],
 );
 ```
 
@@ -326,7 +326,7 @@ final yearly = Yearly(
 final annualMeeting = Yearly.timed(
   startDate: DateTime(2023, 01, 01),
   frequency: 1,
-  timesOfDay: [TimeOfDay(hour: 14, minute: 0)],
+  clockTimes: [ClockTime(hour: 14, minute: 0)],
 );
 ```
 
@@ -418,7 +418,7 @@ All schedule types provide these methods:
 
 **Timed Schedule Methods:**
 - `isTimed` - Check if the schedule has specific times
-- `occursAt(TimeOfDay timeOfDay)` - Check if the schedule occurs at a specific time of day
+- `occursAt(ClockTime clockTime)` - Check if the schedule occurs at a specific time of day
 - For **Timed schedules**: Returns `true` only for configured times
 - For **UnTimed schedules**: Returns `true` for any time (all-day events)
 
@@ -473,17 +473,17 @@ final nextDoses = medication.getNextNOccurrences(3);
 final timedMedication = Daily.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
-  timesOfDay: [
-    TimeOfDay(hour: 8, minute: 0),   // 8:00 AM
-    TimeOfDay(hour: 14, minute: 0),  // 2:00 PM
-    TimeOfDay(hour: 20, minute: 0),  // 8:00 PM
+  clockTimes: [
+    ClockTime(hour: 8, minute: 0),   // 8:00 AM
+    ClockTime(hour: 14, minute: 0),  // 2:00 PM
+    ClockTime(hour: 20, minute: 0),  // 8:00 PM
   ],
 );
 
 // Check if it's time for medication
 final now = DateTime.now();
 if (timedMedication.occursOn(now) && 
-    timedMedication.occursAt(now.toTimeOfDay())) {
+    timedMedication.occursAt(now.toClockTime())) {
   print('Time to take your medication!');
 }
 
@@ -611,7 +611,7 @@ final birthday = Daily(
 final now = DateTime.now();
 if (birthday.occursOn(now)) {
   // This will be true for any time during the birthday
-  if (birthday.occursAt(now.toTimeOfDay())) {
+  if (birthday.occursAt(now.toClockTime())) {
     print('Happy Birthday! 🎉');
   }
 }
@@ -620,11 +620,11 @@ if (birthday.occursOn(now)) {
 final meeting = Daily.timed(
   startDate: DateTime(2023, 1, 1),
   frequency: 1,
-  timesOfDay: [TimeOfDay(hour: 14, minute: 0)], // 2:00 PM
+  clockTimes: [ClockTime(hour: 14, minute: 0)], // 2:00 PM
 );
 
 // Check if it's meeting time
-if (meeting.occursOn(now) && meeting.occursAt(now.toTimeOfDay())) {
+if (meeting.occursOn(now) && meeting.occursAt(now.toClockTime())) {
   print('Time for the meeting!');
 } else if (meeting.occursOn(now)) {
   print('Meeting day, but not meeting time yet');

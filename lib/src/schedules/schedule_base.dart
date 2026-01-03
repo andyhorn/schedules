@@ -1,4 +1,4 @@
-import 'package:schedules/src/schedules/time_of_day.dart';
+import 'package:schedules/src/schedules/clock_time.dart';
 import 'package:schedules/src/utils/utils.dart';
 
 part 'singular.dart';
@@ -20,10 +20,10 @@ final class UnTimed extends ScheduleTimingMode {
 
 final class Timed extends ScheduleTimingMode {
   const Timed({
-    required this.timesOfDay,
+    required this.clockTimes,
   });
 
-  final Iterable<TimeOfDay> timesOfDay;
+  final Iterable<ClockTime> clockTimes;
 }
 
 /// A schedule represents a set of dates that an event occurs on.
@@ -47,12 +47,12 @@ sealed class Schedule {
       }
     }
 
-    if (timingMode case Timed(timesOfDay: final timesOfDay)) {
-      if (timesOfDay.isEmpty) {
+    if (timingMode case Timed(clockTimes: final clockTimes)) {
+      if (clockTimes.isEmpty) {
         throw ArgumentError.value(
-          timesOfDay,
-          'timesOfDay',
-          'Times of day list cannot be empty',
+          clockTimes,
+          'clockTimes',
+          'Clock times list cannot be empty',
         );
       }
     }
@@ -77,10 +77,10 @@ sealed class Schedule {
   /// Determine if this schedule includes the given [date].
   bool occursOn(DateTime date);
 
-  /// Determine if this schedule occurs at the given [timeOfDay].
-  bool occursAt(TimeOfDay timeOfDay) {
-    if (timingMode case Timed(:final timesOfDay)) {
-      return timesOfDay.any((scheduledTime) => scheduledTime == timeOfDay);
+  /// Determine if this schedule occurs at the given [clockTime].
+  bool occursAt(ClockTime clockTime) {
+    if (timingMode case Timed(:final clockTimes)) {
+      return clockTimes.any((scheduledTime) => scheduledTime == clockTime);
     }
 
     return true;
@@ -89,8 +89,8 @@ sealed class Schedule {
   /// Generates timed occurrences for a given date.
   /// Returns an iterable of DateTime instances with the scheduled times for the given date.
   Iterable<DateTime> _generateTimedOccurrences(DateTime date) {
-    if (timingMode case Timed(:final timesOfDay)) {
-      return timesOfDay.map((timeOfDay) => date.withTimeOfDay(timeOfDay));
+    if (timingMode case Timed(:final clockTimes)) {
+      return clockTimes.map((clockTime) => date.withClockTime(clockTime));
     }
 
     return [date];

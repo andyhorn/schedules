@@ -48,12 +48,12 @@ class Monthly extends Schedule {
     );
   }
 
-  /// Creates a monthly schedule that occurs every [frequency] months on the given [days] at the given [timesOfDay].
+  /// Creates a monthly schedule that occurs every [frequency] months on the given [days] at the given [clockTimes].
   factory Monthly.timed({
     required DateTime startDate,
     required int frequency,
     required List<int> days,
-    required Iterable<TimeOfDay> timesOfDay,
+    required Iterable<ClockTime> clockTimes,
     DateTime? endDate,
   }) {
     return Monthly._internal(
@@ -61,7 +61,7 @@ class Monthly extends Schedule {
       frequency: frequency,
       days: days,
       endDate: endDate,
-      timingMode: Timed(timesOfDay: timesOfDay),
+      timingMode: Timed(clockTimes: clockTimes),
     );
   }
 

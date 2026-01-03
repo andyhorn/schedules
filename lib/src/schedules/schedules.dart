@@ -1,2 +1,2 @@
 export 'schedule_base.dart';
-export 'time_of_day.dart';
+export 'clock_time.dart';

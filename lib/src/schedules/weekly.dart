@@ -55,12 +55,12 @@ class Weekly extends Schedule {
     );
   }
 
-  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays] at the given [timesOfDay].
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays] at the given [clockTimes].
   factory Weekly.timed({
     required DateTime startDate,
     required int frequency,
     required List<int> weekdays,
-    required Iterable<TimeOfDay> timesOfDay,
+    required Iterable<ClockTime> clockTimes,
     DateTime? endDate,
   }) {
     return Weekly._internal(
@@ -68,7 +68,7 @@ class Weekly extends Schedule {
       frequency: frequency,
       weekdays: weekdays,
       endDate: endDate,
-      timingMode: Timed(timesOfDay: timesOfDay),
+      timingMode: Timed(clockTimes: clockTimes),
     );
   }
 

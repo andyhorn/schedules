@@ -1,4 +1,4 @@
-import 'package:schedules/src/schedules/time_of_day.dart';
+import 'package:schedules/src/schedules/clock_time.dart';
 
 extension DateTimeExtensions on DateTime {
   /// Returns `true` if this date is earlier than the given [date].
@@ -152,18 +152,18 @@ extension DateTimeExtensions on DateTime {
     return add(Duration(days: daysDifference));
   }
 
-  /// Returns a new [TimeOfDay] representing the time of day for this date.
-  TimeOfDay toTimeOfDay() => TimeOfDay.fromDateTime(this);
+  /// Returns a new [ClockTime] representing the time of day for this date.
+  ClockTime toClockTime() => ClockTime.fromDateTime(this);
 
   /// Returns a new [DateTime] with the same year, month, and day as this date,
-  /// but with the given [timeOfDay].
-  DateTime withTimeOfDay(TimeOfDay timeOfDay) => DateTime(
+  /// but with the given [clockTime].
+  DateTime withClockTime(ClockTime clockTime) => DateTime(
         year,
         month,
         day,
-        timeOfDay.hour,
-        timeOfDay.minute,
-        timeOfDay.second,
-        timeOfDay.millisecond,
+        clockTime.hour,
+        clockTime.minute,
+        clockTime.second,
+        clockTime.millisecond,
       );
 }

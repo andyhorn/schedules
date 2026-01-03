@@ -5,13 +5,13 @@
 /// - [minute] is not between 0 and 59
 /// - [second] is not between 0 and 59
 /// - [millisecond] is not between 0 and 999
-class TimeOfDay {
+class ClockTime {
   final int hour;
   final int minute;
   final int second;
   final int millisecond;
 
-  TimeOfDay({
+  ClockTime({
     required this.hour,
     required this.minute,
     this.second = 0,
@@ -50,7 +50,7 @@ class TimeOfDay {
     }
   }
 
-  TimeOfDay.fromDateTime(DateTime dateTime)
+  ClockTime.fromDateTime(DateTime dateTime)
       : hour = dateTime.hour,
         minute = dateTime.minute,
         second = dateTime.second,
@@ -58,7 +58,7 @@ class TimeOfDay {
 
   @override
   bool operator ==(Object other) {
-    return other is TimeOfDay &&
+    return other is ClockTime &&
         hour == other.hour &&
         minute == other.minute &&
         second == other.second &&
