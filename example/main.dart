@@ -1,3 +1,6 @@
+// Printing to the console is the point of this example.
+// ignore_for_file: avoid_print
+
 import 'package:schedules/schedules.dart';
 
 void main() {
@@ -6,12 +9,13 @@ void main() {
   // 1. One-time event
   final birthday = Singular(date: DateTime(2024, 6, 15));
   print(
-    'Birthday occurs on June 15, 2024: ${birthday.occursOn(DateTime(2024, 6, 15))}',
+    'Birthday occurs on June 15, 2024: '
+    '${birthday.occursOn(DateTime(2024, 6, 15))}',
   );
 
   // 2. Daily workout every other day
   final workout = Daily(
-    startDate: DateTime(2024, 1, 1),
+    startDate: DateTime(2024),
     frequency: 2, // Every 2 days
   );
   print('Next 5 workout days:');
@@ -21,7 +25,7 @@ void main() {
 
   // 3. Weekly team meetings
   final meetings = Weekly(
-    startDate: DateTime(2024, 1, 1),
+    startDate: DateTime(2024),
     frequency: 1,
     weekdays: [DateTime.monday, DateTime.wednesday, DateTime.friday],
   );
@@ -32,7 +36,7 @@ void main() {
 
   // 4. Monthly rent payment
   final rent = Monthly(
-    startDate: DateTime(2024, 1, 1),
+    startDate: DateTime(2024),
     frequency: 1,
     days: [1], // 1st of each month
   );
@@ -49,8 +53,8 @@ void main() {
   );
   print('\nQ1 2024 payroll dates:');
   final q1Payroll = payroll.getOccurrencesUntil(
-    DateTime(2024, 4, 1),
-    from: DateTime(2024, 1, 1),
+    DateTime(2024, 4),
+    from: DateTime(2024),
   );
   for (final date in q1Payroll) {
     print('  - ${date.toString().split(' ')[0]}');
@@ -58,7 +62,7 @@ void main() {
 
   // 6. Work schedule with holidays
   final workDays = Weekly(
-    startDate: DateTime(2024, 1, 1),
+    startDate: DateTime(2024),
     frequency: 1,
     weekdays: [
       DateTime.monday,
@@ -70,14 +74,14 @@ void main() {
   );
 
   final holidays = [
-    DateTime(2024, 1, 1), // New Year's Day
+    DateTime(2024), // New Year's Day
     DateTime(2024, 1, 15), // MLK Day
   ];
 
   print('\nWork days in January (excluding holidays):');
   final janWorkDays = workDays.getOccurrencesUntil(
-    DateTime(2024, 2, 1),
-    from: DateTime(2024, 1, 1),
+    DateTime(2024, 2),
+    from: DateTime(2024),
     exclude: holidays,
   );
   for (final date in janWorkDays) {
@@ -87,7 +91,8 @@ void main() {
   // 7. Check if today is a work day
   final today = DateTime.now();
   print(
-    '\nToday (${today.toString().split(' ')[0]}) is a work day: ${workDays.occursOn(today)}',
+    '\nToday (${today.toString().split(' ')[0]}) is a work day: '
+    '${workDays.occursOn(today)}',
   );
 
   // 8. Get next occurrence
