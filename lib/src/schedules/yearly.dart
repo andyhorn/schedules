@@ -6,6 +6,19 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [endDate] is before [startDate]
 class Yearly extends Schedule {
+  /// Creates a yearly schedule that occurs every [frequency] years on the
+  /// same day and month as the [startDate].
+  factory Yearly({
+    required DateTime startDate,
+    required int frequency,
+    DateTime? endDate,
+  }) {
+    return Yearly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+    );
+  }
   Yearly._internal({
     required super.startDate,
     required this.frequency,
@@ -21,20 +34,8 @@ class Yearly extends Schedule {
     }
   }
 
-  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate].
-  factory Yearly({
-    required DateTime startDate,
-    required int frequency,
-    DateTime? endDate,
-  }) {
-    return Yearly._internal(
-      startDate: startDate,
-      frequency: frequency,
-      endDate: endDate,
-    );
-  }
-
-  /// Creates a yearly schedule that occurs every [frequency] years on the same day and month as the [startDate] at the given [clockTimes].
+  /// Creates a yearly schedule that occurs every [frequency] years on the
+  /// same day and month as the [startDate] at the given [clockTimes].
   factory Yearly.timed({
     required DateTime startDate,
     required int frequency,
@@ -73,32 +74,15 @@ class Yearly extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) sync* {
-    var currentDate = _clampToBounds(from).startOfDay();
-    currentDate = _getNextValidDay(from ?? startDate);
-
-    final isLeapYear = currentDate.month == 2 && currentDate.day == 29;
-
-    bool isBeyondEndDate(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
+    var currentDate = _getNextValidDay(_clampToBounds(from));
 
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
-      if (isBeyondEndDate(currentDate)) {
+      if (_isBeyondEnd(currentDate)) {
         return;
       }
 
-      if (!isExcluded(currentDate)) {
+      if (!_isExcluded(currentDate, exclude)) {
         // Generate timed occurrences for this date
         for (final occurrence in _generateTimedOccurrences(currentDate)) {
           yield occurrence;
@@ -110,19 +94,7 @@ class Yearly extends Schedule {
         }
       }
 
-      if (isLeapYear) {
-        // Use math to find the next leap year that also satisfies the
-        // frequency requirement.
-        final lcm = getLCM([frequency, 4]);
-
-        if (lcm == 0) {
-          break;
-        }
-
-        currentDate = currentDate.addYears(lcm, overflow: false);
-      } else {
-        currentDate = currentDate.addYears(frequency, overflow: false);
-      }
+      currentDate = _getNextValidDay(DateTime(currentDate.year + 1));
     }
   }
 
@@ -132,59 +104,41 @@ class Yearly extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) sync* {
-    var currentDate = _clampToBounds(from).startOfDay();
-    currentDate = _getNextValidDay(from ?? startDate);
-
-    final isLeapYear = currentDate.month == 2 && currentDate.day == 29;
-
-    bool isBeyondEndDates(DateTime date) {
-      if (date.isLaterDateThan(end)) {
-        return true;
-      }
-
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
+    var currentDate = _getNextValidDay(_clampToBounds(from));
 
     while (true) {
-      if (isBeyondEndDates(currentDate)) {
+      if (_isBeyondEnd(currentDate, end)) {
         return;
       }
 
-      if (!isExcluded(currentDate)) {
+      if (!_isExcluded(currentDate, exclude)) {
         // Generate timed occurrences for this date
         for (final occurrence in _generateTimedOccurrences(currentDate)) {
           yield occurrence;
         }
       }
 
-      if (isLeapYear) {
-        final lcm = getLCM([frequency, 4]);
-
-        if (lcm == 0) {
-          return;
-        }
-
-        currentDate = currentDate.addYears(lcm, overflow: false);
-      } else {
-        currentDate = currentDate.addYears(frequency, overflow: false);
-      }
+      currentDate = _getNextValidDay(DateTime(currentDate.year + 1));
     }
   }
 
+  /// Finds the first anniversary of [startDate] on or after [from] that
+  /// satisfies the year [frequency] and actually exists (a Feb 29
+  /// anniversary only occurs in leap years).
   DateTime _getNextValidDay(DateTime from) {
-    final offset = (startDate.year - from.year).abs() % frequency;
-    final year = offset == 0 ? from.year : from.year + (frequency - offset);
+    final offset = (from.year - startDate.year) % frequency;
+    var year = offset == 0 ? from.year : from.year + frequency - offset;
 
-    return DateTime(year, startDate.month, startDate.day);
+    while (true) {
+      final candidate = DateTime(year, startDate.month, startDate.day);
+      final exists =
+          candidate.month == startDate.month && candidate.day == startDate.day;
+
+      if (exists && !candidate.isEarlierDateThan(from)) {
+        return candidate;
+      }
+
+      year += frequency;
+    }
   }
 }

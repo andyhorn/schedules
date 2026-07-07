@@ -6,6 +6,18 @@ part of 'schedule_base.dart';
 /// - [frequency] is less than 1
 /// - [endDate] is before [startDate]
 class Daily extends Schedule {
+  /// Creates a daily schedule that occurs every [frequency] days.
+  factory Daily({
+    required DateTime startDate,
+    required int frequency,
+    DateTime? endDate,
+  }) {
+    return Daily._internal(
+      startDate: startDate,
+      frequency: frequency,
+      endDate: endDate,
+    );
+  }
   Daily._internal({
     required super.startDate,
     required this.frequency,
@@ -21,21 +33,8 @@ class Daily extends Schedule {
     }
   }
 
-  /// Creates a daily schedule that occurs every [frequency] days.
-  factory Daily({
-    required DateTime startDate,
-    required int frequency,
-    DateTime? endDate,
-  }) {
-    return Daily._internal(
-      startDate: startDate,
-      frequency: frequency,
-      endDate: endDate,
-      timingMode: const UnTimed(),
-    );
-  }
-
-  /// Creates a daily schedule that occurs every [frequency] days at the given [clockTimes].
+  /// Creates a daily schedule that occurs every [frequency] days at the
+  /// given [clockTimes].
   factory Daily.timed({
     required DateTime startDate,
     required int frequency,
@@ -74,28 +73,14 @@ class Daily extends Schedule {
     var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
-    bool isBeyondEndDate(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     // Generate the next n occurrences
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
-      if (isBeyondEndDate(currentDate)) {
+      if (_isBeyondEnd(currentDate)) {
         return;
       }
 
-      if (!isExcluded(currentDate)) {
+      if (!_isExcluded(currentDate, exclude)) {
         // Generate timed occurrences for this date
         for (final occurrence in _generateTimedOccurrences(currentDate)) {
           yield occurrence;
@@ -117,33 +102,15 @@ class Daily extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) sync* {
-    var currentDate = (from ?? startDate).startOfDay();
+    var currentDate = _clampToBounds(from).startOfDay();
     currentDate = _getFirstValidDate(currentDate).startOfDay();
 
-    bool isBeyondEndDates(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      if (date.isLaterDateThan(end)) {
-        return true;
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     while (true) {
-      if (isBeyondEndDates(currentDate)) {
+      if (_isBeyondEnd(currentDate, end)) {
         return;
       }
 
-      if (!isExcluded(currentDate)) {
+      if (!_isExcluded(currentDate, exclude)) {
         // Generate timed occurrences for this date
         for (final occurrence in _generateTimedOccurrences(currentDate)) {
           yield occurrence;

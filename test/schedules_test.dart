@@ -3,6 +3,53 @@ import 'package:test/test.dart';
 
 void main() {
   group(Schedule, () {
+    group('validation', () {
+      test('throws an ArgumentError if endDate is before startDate', () {
+        expect(
+          () => Daily(
+            startDate: DateTime(2023, 01, 10),
+            frequency: 1,
+            endDate: DateTime(2023, 01, 09),
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+    });
+
+    group('collection immutability', () {
+      test('mutating the original weekdays list does not affect the schedule',
+          () {
+        final weekdays = [DateTime.monday];
+        final schedule = Weekly(
+          startDate: DateTime(2024),
+          frequency: 1,
+          weekdays: weekdays,
+        );
+
+        weekdays.add(99);
+
+        expect(schedule.weekdays, [DateTime.monday]);
+        expect(
+          () => schedule.weekdays.add(DateTime.friday),
+          throwsUnsupportedError,
+        );
+      });
+
+      test('mutating the original days list does not affect the schedule', () {
+        final days = [10];
+        final schedule = Monthly(
+          startDate: DateTime(2024),
+          frequency: 1,
+          days: days,
+        );
+
+        days.add(99);
+
+        expect(schedule.days, [10]);
+        expect(() => schedule.days.add(15), throwsUnsupportedError);
+      });
+    });
+
     group(Singular, () {
       group('#occursOn', () {
         test('is true on the correct date', () {
@@ -12,26 +59,26 @@ void main() {
 
         test('is true with differing times', () {
           final schedule = Singular(date: DateTime(2023, 01, 01, 12, 30, 45));
-          expect(schedule.occursOn(DateTime(2023, 01, 01, 12, 45, 00)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 01, 01, 12, 45)), isTrue);
         });
 
         test('is false for incorrect date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           expect(schedule.occursOn(DateTime(2023, 01, 02)), isFalse);
         });
       });
 
       group('#getOccurrencesUntil', () {
         test('returns the single occurrence if within range', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences =
               schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
 
-          expect(occurrences, [DateTime(2023, 01, 01)]);
+          expect(occurrences, [DateTime(2023)]);
         });
 
         test('returns empty if end date is before start date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences =
               schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
 
@@ -39,10 +86,12 @@ void main() {
         });
 
         test('returns empty if from date is after start date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 10),
-                  from: DateTime(2023, 01, 02))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 10),
+                from: DateTime(2023, 01, 02),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
@@ -50,54 +99,92 @@ void main() {
 
         test('returns the single occurrence if from date is before start date',
             () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 10),
-                  from: DateTime(2022, 12, 31))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 10),
+                from: DateTime(2022, 12, 31),
+              )
               .toList();
 
-          expect(occurrences, [DateTime(2023, 01, 01)]);
+          expect(occurrences, [DateTime(2023)]);
         });
 
         test('returns empty if from date is after end date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 10),
-                  from: DateTime(2023, 01, 15))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 10),
+                from: DateTime(2023, 01, 15),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
         });
 
         test('returns empty if the occurrence is excluded', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2023, 01, 10),
-              exclude: [DateTime(2023, 01, 01)]).toList();
+            DateTime(2023, 01, 10),
+            exclude: [DateTime(2023)],
+          ).toList();
 
           expect(occurrences, isEmpty);
         });
 
         test('returns the occurrence if it is not excluded', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2023, 01, 10),
-              exclude: [DateTime(2023, 01, 02)]).toList();
+            DateTime(2023, 01, 10),
+            exclude: [DateTime(2023, 01, 02)],
+          ).toList();
 
-          expect(occurrences, [DateTime(2023, 01, 01)]);
+          expect(occurrences, [DateTime(2023)]);
+        });
+
+        test('returns empty if the occurrence is excluded and from is given',
+            () {
+          final schedule = Singular(date: DateTime(2023));
+          final occurrences = schedule.getOccurrencesUntil(
+            DateTime(2023, 01, 10),
+            from: DateTime(2022, 12, 30),
+            exclude: [DateTime(2023)],
+          ).toList();
+
+          expect(occurrences, isEmpty);
+        });
+
+        test(
+            'returns empty if the occurrence is after the end date '
+            'even when from is earlier', () {
+          final schedule = Singular(date: DateTime(2023));
+          final occurrences = schedule
+              .getOccurrencesUntil(
+                DateTime(2022, 12, 31),
+                from: DateTime(2022, 12, 30),
+              )
+              .toList();
+
+          expect(occurrences, isEmpty);
         });
       });
 
       group('#getNextNOccurrences', () {
         test('returns the single occurrence if in range', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
-          expect(occurrences, [DateTime(2023, 01, 01)]);
+          expect(occurrences, [DateTime(2023)]);
+        });
+
+        test('returns empty if n is less than 1', () {
+          final schedule = Singular(date: DateTime(2023));
+
+          expect(schedule.getNextNOccurrences(0), isEmpty);
         });
 
         test('returns empty if date is after start date', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
+          final schedule = Singular(date: DateTime(2023));
           final occurrences = schedule
               .getNextNOccurrences(1, from: DateTime(2023, 01, 02))
               .toList();
@@ -106,25 +193,29 @@ void main() {
         });
 
         test('returns empty if the occurrence is excluded', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
-          final occurrences = schedule.getNextNOccurrences(1,
-              exclude: [DateTime(2023, 01, 01)]).toList();
+          final schedule = Singular(date: DateTime(2023));
+          final occurrences = schedule.getNextNOccurrences(
+            1,
+            exclude: [DateTime(2023)],
+          ).toList();
 
           expect(occurrences, isEmpty);
         });
 
         test('returns the occurrence if it is not excluded', () {
-          final schedule = Singular(date: DateTime(2023, 01, 01));
-          final occurrences = schedule.getNextNOccurrences(1,
-              exclude: [DateTime(2023, 01, 02)]).toList();
+          final schedule = Singular(date: DateTime(2023));
+          final occurrences = schedule.getNextNOccurrences(
+            1,
+            exclude: [DateTime(2023, 01, 02)],
+          ).toList();
 
-          expect(occurrences, [DateTime(2023, 01, 01)]);
+          expect(occurrences, [DateTime(2023)]);
         });
       });
 
       group('#occursAt', () {
         test('returns true for any time of day for UnTimed schedules', () {
-          final schedule = Singular(date: DateTime(2023, 1, 1));
+          final schedule = Singular(date: DateTime(2023));
 
           // UnTimed schedules should return true for any time of day
           expect(schedule.occursAt(ClockTime(hour: 0, minute: 0)), isTrue);
@@ -135,18 +226,84 @@ void main() {
         });
 
         test('isTimed returns false for UnTimed schedules', () {
-          final schedule = Singular(date: DateTime(2023, 1, 1));
+          final schedule = Singular(date: DateTime(2023));
 
           expect(schedule.isTimed, isFalse);
           expect(schedule.timingMode, isA<UnTimed>());
+        });
+      });
+
+      group('Singular.timed', () {
+        group('constructor', () {
+          test('creates a timed singular schedule', () {
+            final schedule = Singular.timed(
+              date: DateTime(2023),
+              clockTime: ClockTime(hour: 9, minute: 30),
+            );
+
+            expect(schedule.isTimed, isTrue);
+            expect(schedule.timingMode, isA<Timed>());
+          });
+        });
+
+        group('#occursAt', () {
+          test('returns true for the scheduled time', () {
+            final schedule = Singular.timed(
+              date: DateTime(2023),
+              clockTime: ClockTime(hour: 9, minute: 30),
+            );
+
+            expect(schedule.occursAt(ClockTime(hour: 9, minute: 30)), isTrue);
+          });
+
+          test('returns false for other times', () {
+            final schedule = Singular.timed(
+              date: DateTime(2023),
+              clockTime: ClockTime(hour: 9, minute: 30),
+            );
+
+            expect(
+              schedule.occursAt(ClockTime(hour: 10, minute: 30)),
+              isFalse,
+            );
+          });
+        });
+
+        group('#getNextNOccurrences', () {
+          test('returns the occurrence at the scheduled time', () {
+            final schedule = Singular.timed(
+              date: DateTime(2023),
+              clockTime: ClockTime(hour: 9, minute: 30),
+            );
+
+            final occurrences = schedule.getNextNOccurrences(1).toList();
+
+            expect(occurrences, [DateTime(2023, 1, 1, 9, 30)]);
+          });
+        });
+
+        group('#getOccurrencesUntil', () {
+          test('returns the occurrence at the scheduled time', () {
+            final schedule = Singular.timed(
+              date: DateTime(2023),
+              clockTime: ClockTime(hour: 9, minute: 30),
+            );
+
+            final occurrences =
+                schedule.getOccurrencesUntil(DateTime(2023, 1, 10)).toList();
+
+            expect(occurrences, [DateTime(2023, 1, 1, 9, 30)]);
+          });
         });
       });
     });
 
     group(Daily, () {
       test('throws an error if frequency is 0', () {
-        expect(() => Daily(startDate: DateTime(2023, 01, 01), frequency: 0),
-            throwsA(isA<ArgumentError>()));
+        expect(
+          () => Daily(startDate: DateTime(2023), frequency: 0),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       group('#occursOn', () {
@@ -173,7 +330,7 @@ void main() {
 
         test('is false before the start date', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -182,7 +339,7 @@ void main() {
 
         test('is false after the end date', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 10),
             frequency: 1,
           );
@@ -197,18 +354,18 @@ void main() {
           );
 
           expect(schedule.occursOn(DateTime(2023, 1, 31)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 2, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 2)), isTrue);
           expect(schedule.occursOn(DateTime(2023, 2, 28)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 3, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 3)), isTrue);
         });
 
         test('handles month transitions with large frequency', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 30, // Every 30 days
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
           expect(schedule.occursOn(DateTime(2023, 1, 31)), isTrue);
           expect(schedule.occursOn(DateTime(2023, 3, 2)), isTrue);
         });
@@ -220,36 +377,39 @@ void main() {
           );
 
           expect(schedule.occursOn(DateTime(2023, 12, 31)), isTrue);
-          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2024)), isTrue);
           expect(schedule.occursOn(DateTime(2024, 1, 2)), isTrue);
         });
 
         test('handles very large frequency', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1000, // Every 1000 days
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2025, 9, 27)),
-              isTrue); // Exactly 1000 days later
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
+          expect(
+            schedule.occursOn(DateTime(2025, 9, 27)),
+            isTrue,
+          ); // Exactly 1000 days later
           expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
           expect(
-              schedule.occursOn(
-                  DateTime(2023, 1, 1).add(const Duration(days: 1000))),
-              isTrue); // 1000 days later
+            schedule.occursOn(
+              DateTime(2023).add(const Duration(days: 1000)),
+            ),
+            isTrue,
+          ); // 1000 days later
         });
       });
 
       group('#getOccurrencesUntil', () {
         test('returns correct occurrences until end date', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 2);
           final occurrences =
               schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 03),
             DateTime(2023, 01, 05),
             DateTime(2023, 01, 07),
@@ -257,9 +417,31 @@ void main() {
           ]);
         });
 
+        test('clamps from dates before the start date to the schedule start',
+            () {
+          final schedule = Daily(
+            startDate: DateTime(2023, 01, 10),
+            frequency: 3,
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 20),
+                from: DateTime(2023),
+              )
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2023, 01, 10),
+            DateTime(2023, 01, 13),
+            DateTime(2023, 01, 16),
+            DateTime(2023, 01, 19),
+          ]);
+        });
+
         test('respects endDate constraint', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 05),
             frequency: 1,
           );
@@ -268,7 +450,7 @@ void main() {
               schedule.getOccurrencesUntil(DateTime(2023, 01, 10)).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 02),
             DateTime(2023, 01, 03),
             DateTime(2023, 01, 04),
@@ -277,11 +459,12 @@ void main() {
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 3);
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 15),
-                  from: DateTime(2023, 01, 02))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 15),
+                from: DateTime(2023, 01, 02),
+              )
               .toList();
 
           expect(occurrences, [
@@ -293,8 +476,7 @@ void main() {
         });
 
         test('returns empty if end date is before start date', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 1);
           final occurrences =
               schedule.getOccurrencesUntil(DateTime(2022, 12, 31)).toList();
 
@@ -302,11 +484,12 @@ void main() {
         });
 
         test('returns empty if from date is after end date', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 1);
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 05),
-                  from: DateTime(2023, 01, 10))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 05),
+                from: DateTime(2023, 01, 10),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
@@ -314,26 +497,29 @@ void main() {
 
         test('returns empty if from date is after schedule end date', () {
           final schedule = Daily(
-              startDate: DateTime(2023, 01, 01),
-              frequency: 1,
-              endDate: DateTime(2023, 01, 05));
+            startDate: DateTime(2023),
+            frequency: 1,
+            endDate: DateTime(2023, 01, 05),
+          );
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 15),
-                  from: DateTime(2023, 01, 06))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 15),
+                from: DateTime(2023, 01, 06),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
         });
 
         test('excludes specified dates from results', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 2);
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2023, 01, 10),
-              exclude: [DateTime(2023, 01, 03)]).toList();
+            DateTime(2023, 01, 10),
+            exclude: [DateTime(2023, 01, 03)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 05), // 03 is excluded
             DateTime(2023, 01, 07),
             DateTime(2023, 01, 09),
@@ -341,17 +527,18 @@ void main() {
         });
 
         test('excludes multiple specified dates from results', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
-          final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 01, 08), exclude: [
-            DateTime(2023, 01, 02),
-            DateTime(2023, 01, 04),
-            DateTime(2023, 01, 06),
-          ]).toList();
+          final schedule = Daily(startDate: DateTime(2023), frequency: 1);
+          final occurrences = schedule.getOccurrencesUntil(
+            DateTime(2023, 01, 08),
+            exclude: [
+              DateTime(2023, 01, 02),
+              DateTime(2023, 01, 04),
+              DateTime(2023, 01, 06),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 03), // 02, 04, 06 are excluded
             DateTime(2023, 01, 05),
             DateTime(2023, 01, 07),
@@ -362,12 +549,11 @@ void main() {
 
       group('#getNextNOccurrences', () {
         test('returns correct next occurrences', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 2);
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 03),
             DateTime(2023, 01, 05),
           ]);
@@ -375,7 +561,7 @@ void main() {
 
         test('respects endDate', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 04),
             frequency: 1,
           );
@@ -383,7 +569,7 @@ void main() {
           final occurrences = schedule.getNextNOccurrences(5).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 02),
             DateTime(2023, 01, 03),
             DateTime(2023, 01, 04),
@@ -391,8 +577,7 @@ void main() {
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 3);
+          final schedule = Daily(startDate: DateTime(2023), frequency: 3);
           final occurrences = schedule
               .getNextNOccurrences(3, from: DateTime(2023, 01, 02))
               .toList();
@@ -405,13 +590,14 @@ void main() {
         });
 
         test('excludes specified dates from results', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 2);
-          final occurrences = schedule.getNextNOccurrences(5,
-              exclude: [DateTime(2023, 01, 03)]).toList();
+          final schedule = Daily(startDate: DateTime(2023), frequency: 2);
+          final occurrences = schedule.getNextNOccurrences(
+            5,
+            exclude: [DateTime(2023, 01, 03)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 05), // 03 is excluded
             DateTime(2023, 01, 07),
             DateTime(2023, 01, 09),
@@ -420,15 +606,17 @@ void main() {
         });
 
         test('excludes multiple specified dates from results', () {
-          final schedule =
-              Daily(startDate: DateTime(2023, 01, 01), frequency: 1);
-          final occurrences = schedule.getNextNOccurrences(3, exclude: [
-            DateTime(2023, 01, 02),
-            DateTime(2023, 01, 04),
-          ]).toList();
+          final schedule = Daily(startDate: DateTime(2023), frequency: 1);
+          final occurrences = schedule.getNextNOccurrences(
+            3,
+            exclude: [
+              DateTime(2023, 01, 02),
+              DateTime(2023, 01, 04),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 03), // 02 and 04 are excluded
             DateTime(2023, 01, 05),
           ]);
@@ -439,7 +627,7 @@ void main() {
         group('constructor', () {
           test('creates timed daily schedule with single time', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -452,7 +640,7 @@ void main() {
 
           test('creates timed daily schedule with multiple times', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [
                 ClockTime(hour: 9, minute: 30),
@@ -471,30 +659,34 @@ void main() {
           test('throws ArgumentError for empty clockTimes', () {
             expect(
               () => Daily.timed(
-                startDate: DateTime(2023, 1, 1),
+                startDate: DateTime(2023),
                 frequency: 1,
                 clockTimes: [],
               ),
-              throwsA(isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Clock times list cannot be empty'),
-              )),
+              throwsA(
+                isA<ArgumentError>().having(
+                  (e) => e.message,
+                  'message',
+                  contains('Clock times list cannot be empty'),
+                ),
+              ),
             );
           });
 
           test('throws ArgumentError for invalid frequency', () {
             expect(
               () => Daily.timed(
-                startDate: DateTime(2023, 1, 1),
+                startDate: DateTime(2023),
                 frequency: 0,
                 clockTimes: [ClockTime(hour: 9, minute: 30)],
               ),
-              throwsA(isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Frequency must be greater than or equal to 1'),
-              )),
+              throwsA(
+                isA<ArgumentError>().having(
+                  (e) => e.message,
+                  'message',
+                  contains('Frequency must be greater than or equal to 1'),
+                ),
+              ),
             );
           });
         });
@@ -502,7 +694,7 @@ void main() {
         group('#occursAt', () {
           test('returns true for scheduled times', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [
                 ClockTime(hour: 9, minute: 30),
@@ -516,7 +708,7 @@ void main() {
 
           test('returns false for non-scheduled times', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -529,12 +721,12 @@ void main() {
         group('#occursOn', () {
           test('returns true for dates that match the schedule pattern', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 2,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
-            expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023)), isTrue);
             expect(schedule.occursOn(DateTime(2023, 1, 3)), isTrue);
             expect(schedule.occursOn(DateTime(2023, 1, 5)), isTrue);
           });
@@ -542,7 +734,7 @@ void main() {
           test('returns false for dates that do not match the schedule pattern',
               () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 2,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -555,7 +747,7 @@ void main() {
         group('#getNextNOccurrences', () {
           test('returns occurrences with correct times for single time', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -570,7 +762,7 @@ void main() {
 
           test('returns occurrences with correct times for multiple times', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [
                 ClockTime(hour: 9, minute: 30),
@@ -582,14 +774,14 @@ void main() {
 
             expect(occurrences, hasLength(4));
             expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
-            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14, 0)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14)));
             expect(occurrences[2], equals(DateTime(2023, 1, 2, 9, 30)));
-            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14, 0)));
+            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14)));
           });
 
           test('respects frequency parameter', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 2,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -604,7 +796,7 @@ void main() {
 
           test('respects from parameter', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -620,7 +812,7 @@ void main() {
 
           test('excludes specified dates', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -640,7 +832,7 @@ void main() {
         group('#getOccurrencesUntil', () {
           test('returns occurrences with correct times until end date', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
@@ -656,7 +848,7 @@ void main() {
 
           test('returns occurrences with multiple times until end date', () {
             final schedule = Daily.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               clockTimes: [
                 ClockTime(hour: 9, minute: 30),
@@ -669,9 +861,9 @@ void main() {
 
             expect(occurrences, hasLength(4));
             expect(occurrences[0], equals(DateTime(2023, 1, 1, 9, 30)));
-            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14, 0)));
+            expect(occurrences[1], equals(DateTime(2023, 1, 1, 14)));
             expect(occurrences[2], equals(DateTime(2023, 1, 2, 9, 30)));
-            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14, 0)));
+            expect(occurrences[3], equals(DateTime(2023, 1, 2, 14)));
           });
         });
       });
@@ -679,7 +871,7 @@ void main() {
       group('#occursAt', () {
         test('returns true for any time of day for UnTimed schedules', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -693,11 +885,12 @@ void main() {
 
         test('returns true for any time of day regardless of frequency', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 3, // Every 3 days
           );
 
-          // Even with frequency > 1, UnTimed schedules should return true for any time
+          // Even with frequency > 1, UnTimed schedules should return
+          // true for any time
           expect(schedule.occursAt(ClockTime(hour: 8, minute: 0)), isTrue);
           expect(schedule.occursAt(ClockTime(hour: 15, minute: 30)), isTrue);
           expect(schedule.occursAt(ClockTime(hour: 22, minute: 15)), isTrue);
@@ -705,12 +898,13 @@ void main() {
 
         test('returns true for any time of day with end date', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 1, 10),
             frequency: 1,
           );
 
-          // UnTimed schedules with end date should still return true for any time
+          // UnTimed schedules with end date should still return true
+          // for any time
           expect(schedule.occursAt(ClockTime(hour: 9, minute: 0)), isTrue);
           expect(schedule.occursAt(ClockTime(hour: 16, minute: 45)), isTrue);
           expect(schedule.occursAt(ClockTime(hour: 21, minute: 30)), isTrue);
@@ -718,7 +912,7 @@ void main() {
 
         test('isTimed returns false for UnTimed schedules', () {
           final schedule = Daily(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -731,63 +925,68 @@ void main() {
     group(Weekly, () {
       test('throws an error if frequency is less than 1', () {
         expect(
-            () => Weekly(
-                  startDate: DateTime(2023, 01, 01),
-                  frequency: 0,
-                  weekdays: [DateTime.monday],
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Weekly(
+            startDate: DateTime(2023),
+            frequency: 0,
+            weekdays: [DateTime.monday],
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for empty weekdays list', () {
         expect(
-            () => Weekly(
-                  startDate: DateTime(2023, 1, 1),
-                  frequency: 1,
-                  weekdays: [], // Empty list
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Weekly(
+            startDate: DateTime(2023),
+            frequency: 1,
+            weekdays: [], // Empty list
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for invalid weekday values', () {
         expect(
-            () => Weekly(
-                  startDate: DateTime(2023, 1, 1),
-                  frequency: 1,
-                  weekdays: [0, 8], // Invalid weekdays (0 and 8)
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Weekly(
+            startDate: DateTime(2023),
+            frequency: 1,
+            weekdays: [0, 8], // Invalid weekdays (0 and 8)
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for negative weekday values', () {
         expect(
-            () => Weekly(
-                  startDate: DateTime(2023, 1, 1),
-                  frequency: 1,
-                  weekdays: [-1, 3], // Negative weekday
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Weekly(
+            startDate: DateTime(2023),
+            frequency: 1,
+            weekdays: [-1, 3], // Negative weekday
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('accepts valid weekday values', () {
         expect(
-            () => Weekly(
-                  startDate: DateTime(2023, 1, 1),
-                  frequency: 1,
-                  weekdays: [1, 2, 3, 4, 5, 6, 7], // All valid weekdays
-                ),
-            returnsNormally);
+          () => Weekly(
+            startDate: DateTime(2023),
+            frequency: 1,
+            weekdays: [1, 2, 3, 4, 5, 6, 7], // All valid weekdays
+          ),
+          returnsNormally,
+        );
       });
 
       group('#occursOn', () {
         test('is false on the start date if it is not the correct weekday', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday],
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2023)), isFalse);
         });
 
         test('is true after the start date on the correct weekday', () {
@@ -816,7 +1015,7 @@ void main() {
 
         test('is false on incorrect weekdays', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 3,
             weekdays: [DateTime.monday],
           );
@@ -828,7 +1027,7 @@ void main() {
 
         test('is false before the start date', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
@@ -838,7 +1037,7 @@ void main() {
 
         test('is false after the end date', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 31),
             frequency: 1,
             weekdays: [DateTime.monday],
@@ -849,24 +1048,28 @@ void main() {
 
         test('handles very large frequency', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 52, // Every 52 weeks (1 year)
             weekdays: [DateTime.sunday],
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 12, 31)),
-              isTrue); // Exactly 52 weeks later
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
+          expect(
+            schedule.occursOn(DateTime(2023, 12, 31)),
+            isTrue,
+          ); // Exactly 52 weeks later
           expect(schedule.occursOn(DateTime(2023, 1, 8)), isFalse);
-          expect(schedule.occursOn(DateTime(2024, 12, 29)),
-              isTrue); // Another 52 weeks later
+          expect(
+            schedule.occursOn(DateTime(2024, 12, 29)),
+            isTrue,
+          ); // Another 52 weeks later
         });
       });
 
       group('#getOccurrencesUntil', () {
         test('returns correct occurrences until end date', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
@@ -881,13 +1084,16 @@ void main() {
             DateTime(2023, 01, 13), // Friday
             DateTime(2023, 01, 16), // Monday
             DateTime(
-                2023, 01, 20), // Friday (included because it's the end date)
+              2023,
+              01,
+              20,
+            ), // Friday (included because it's the end date)
           ]);
         });
 
         test('respects endDate constraint', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 10),
             frequency: 1,
             weekdays: [DateTime.monday],
@@ -904,14 +1110,16 @@ void main() {
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 20),
-                  from: DateTime(2023, 01, 03))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 20),
+                from: DateTime(2023, 01, 03),
+              )
               .toList();
 
           expect(occurrences, [
@@ -920,13 +1128,16 @@ void main() {
             DateTime(2023, 01, 13), // Friday
             DateTime(2023, 01, 16), // Monday
             DateTime(
-                2023, 01, 20), // Friday (included because it's the end date)
+              2023,
+              01,
+              20,
+            ), // Friday (included because it's the end date)
           ]);
         });
 
         test('handles frequency correctly', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 2,
             weekdays: [DateTime.monday],
           );
@@ -942,7 +1153,7 @@ void main() {
 
         test('returns empty if end date is before start date', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
@@ -955,15 +1166,17 @@ void main() {
 
         test('returns empty if from date is after schedule end date', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 05),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
 
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 01, 20),
-                  from: DateTime(2023, 01, 06))
+              .getOccurrencesUntil(
+                DateTime(2023, 01, 20),
+                from: DateTime(2023, 01, 06),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
@@ -971,14 +1184,15 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2023, 01, 20),
-              exclude: [DateTime(2023, 01, 09)]).toList();
+            DateTime(2023, 01, 20),
+            exclude: [DateTime(2023, 01, 09)],
+          ).toList();
 
           expect(occurrences, [
             DateTime(2023, 01, 02),
@@ -991,16 +1205,18 @@ void main() {
 
         test('excludes multiple specified dates from results', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
-          final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 01, 20), exclude: [
-            DateTime(2023, 01, 06),
-            DateTime(2023, 01, 13),
-          ]).toList();
+          final occurrences = schedule.getOccurrencesUntil(
+            DateTime(2023, 01, 20),
+            exclude: [
+              DateTime(2023, 01, 06),
+              DateTime(2023, 01, 13),
+            ],
+          ).toList();
 
           expect(occurrences, [
             DateTime(2023, 01, 02),
@@ -1014,7 +1230,7 @@ void main() {
       group('#getNextNOccurrences', () {
         test('returns correct occurrences', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
@@ -1029,9 +1245,26 @@ void main() {
           ]);
         });
 
+        test('returns ordered occurrences for unsorted weekdays', () {
+          final schedule = Weekly(
+            startDate: DateTime(2024), // Monday
+            frequency: 1,
+            weekdays: [DateTime.friday, DateTime.monday],
+            endDate: DateTime(2024, 01, 10),
+          );
+
+          final occurrences = schedule.getNextNOccurrences(4).toList();
+
+          expect(occurrences, [
+            DateTime(2024),
+            DateTime(2024, 01, 05),
+            DateTime(2024, 01, 08),
+          ]);
+        });
+
         test('respects endDate', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 10),
             frequency: 1,
             weekdays: [DateTime.monday],
@@ -1047,7 +1280,7 @@ void main() {
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
@@ -1066,13 +1299,15 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
-          final occurrences = schedule.getNextNOccurrences(5,
-              exclude: [DateTime(2023, 01, 09)]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            5,
+            exclude: [DateTime(2023, 01, 09)],
+          ).toList();
 
           expect(occurrences, [
             DateTime(2023, 01, 02),
@@ -1085,15 +1320,18 @@ void main() {
 
         test('excludes multiple specified dates from results', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             frequency: 1,
             weekdays: [DateTime.monday, DateTime.friday],
           );
 
-          final occurrences = schedule.getNextNOccurrences(6, exclude: [
-            DateTime(2023, 01, 06),
-            DateTime(2023, 01, 13),
-          ]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            6,
+            exclude: [
+              DateTime(2023, 01, 06),
+              DateTime(2023, 01, 13),
+            ],
+          ).toList();
 
           expect(occurrences, [
             DateTime(2023, 01, 02),
@@ -1110,7 +1348,7 @@ void main() {
         group('constructor', () {
           test('creates timed weekly schedule', () {
             final schedule = Weekly.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
@@ -1124,16 +1362,18 @@ void main() {
           test('throws ArgumentError for empty clockTimes', () {
             expect(
               () => Weekly.timed(
-                startDate: DateTime(2023, 1, 1),
+                startDate: DateTime(2023),
                 frequency: 1,
                 weekdays: [DateTime.monday],
                 clockTimes: [],
               ),
-              throwsA(isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Clock times list cannot be empty'),
-              )),
+              throwsA(
+                isA<ArgumentError>().having(
+                  (e) => e.message,
+                  'message',
+                  contains('Clock times list cannot be empty'),
+                ),
+              ),
             );
           });
         });
@@ -1141,7 +1381,7 @@ void main() {
         group('#occursOn', () {
           test('returns true for correct weekdays', () {
             final schedule = Weekly.timed(
-              startDate: DateTime(2023, 1, 1), // Sunday
+              startDate: DateTime(2023), // Sunday
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
@@ -1149,7 +1389,9 @@ void main() {
 
             expect(schedule.occursOn(DateTime(2023, 1, 2)), isTrue); // Monday
             expect(
-                schedule.occursOn(DateTime(2023, 1, 4)), isTrue); // Wednesday
+              schedule.occursOn(DateTime(2023, 1, 4)),
+              isTrue,
+            ); // Wednesday
             expect(schedule.occursOn(DateTime(2023, 1, 3)), isFalse); // Tuesday
           });
         });
@@ -1158,7 +1400,7 @@ void main() {
           test('returns occurrences with correct times for weekly schedule',
               () {
             final schedule = Weekly.timed(
-              startDate: DateTime(2023, 1, 1), // Sunday
+              startDate: DateTime(2023), // Sunday
               frequency: 1,
               weekdays: [DateTime.monday, DateTime.wednesday],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
@@ -1168,13 +1410,21 @@ void main() {
 
             expect(occurrences, hasLength(4));
             expect(
-                occurrences[0], equals(DateTime(2023, 1, 2, 9, 30))); // Monday
-            expect(occurrences[1],
-                equals(DateTime(2023, 1, 4, 9, 30))); // Wednesday
-            expect(occurrences[2],
-                equals(DateTime(2023, 1, 9, 9, 30))); // Next Monday
-            expect(occurrences[3],
-                equals(DateTime(2023, 1, 11, 9, 30))); // Next Wednesday
+              occurrences[0],
+              equals(DateTime(2023, 1, 2, 9, 30)),
+            ); // Monday
+            expect(
+              occurrences[1],
+              equals(DateTime(2023, 1, 4, 9, 30)),
+            ); // Wednesday
+            expect(
+              occurrences[2],
+              equals(DateTime(2023, 1, 9, 9, 30)),
+            ); // Next Monday
+            expect(
+              occurrences[3],
+              equals(DateTime(2023, 1, 11, 9, 30)),
+            ); // Next Wednesday
           });
         });
       });
@@ -1182,7 +1432,7 @@ void main() {
       group('#occursAt', () {
         test('returns true for any time of day for UnTimed schedules', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
@@ -1197,7 +1447,7 @@ void main() {
 
         test('isTimed returns false for UnTimed schedules', () {
           final schedule = Weekly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             weekdays: [DateTime.monday],
           );
@@ -1211,63 +1461,68 @@ void main() {
     group(Monthly, () {
       test('throws an error if frequency is less than 1', () {
         expect(
-            () => Monthly(
-                  startDate: DateTime(2023, 01, 01),
-                  days: [1],
-                  frequency: 0,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Monthly(
+            startDate: DateTime(2023),
+            days: [1],
+            frequency: 0,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for empty days list', () {
         expect(
-            () => Monthly(
-                  startDate: DateTime(2023, 1, 1),
-                  days: [], // Empty list
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Monthly(
+            startDate: DateTime(2023),
+            days: [], // Empty list
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for invalid day values', () {
         expect(
-            () => Monthly(
-                  startDate: DateTime(2023, 1, 1),
-                  days: [0, 32], // Invalid days (0 and 32)
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Monthly(
+            startDate: DateTime(2023),
+            days: [0, 32], // Invalid days (0 and 32)
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for negative day values', () {
         expect(
-            () => Monthly(
-                  startDate: DateTime(2023, 1, 1),
-                  days: [-1, 15], // Negative day
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Monthly(
+            startDate: DateTime(2023),
+            days: [-1, 15], // Negative day
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('accepts valid day values', () {
         expect(
-            () => Monthly(
-                  startDate: DateTime(2023, 1, 1),
-                  days: [1, 15, 31], // Valid days
-                  frequency: 1,
-                ),
-            returnsNormally);
+          () => Monthly(
+            startDate: DateTime(2023),
+            days: [1, 15, 31], // Valid days
+            frequency: 1,
+          ),
+          returnsNormally,
+        );
       });
 
       group('#occursOn', () {
         test('is false on the start date if it is not a selected date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [2],
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2023)), isFalse);
         });
 
         test('is true on the start date if it is a selected date', () {
@@ -1295,12 +1550,12 @@ void main() {
 
         test('is false on an incorrect date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 2,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 02, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 02)), isFalse);
           expect(schedule.occursOn(DateTime(2023, 02, 15)), isFalse);
           expect(schedule.occursOn(DateTime(2023, 02, 16)), isFalse);
           expect(schedule.occursOn(DateTime(2023, 03, 02)), isFalse);
@@ -1308,42 +1563,42 @@ void main() {
 
         test('is false before the start date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1],
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2022, 12, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2022, 12)), isFalse);
         });
 
         test('is false after the end date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 02, 28),
             days: [1],
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 03, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 03)), isFalse);
         });
 
         test('handles very large frequency', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             days: [1],
             frequency: 12, // Every 12 months (1 year)
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 2, 1)), isFalse);
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
+          expect(schedule.occursOn(DateTime(2024)), isTrue);
+          expect(schedule.occursOn(DateTime(2023, 2)), isFalse);
         });
       });
 
       group('#getOccurrencesUntil', () {
         test('returns correct occurrences until end date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
@@ -1352,18 +1607,18 @@ void main() {
               schedule.getOccurrencesUntil(DateTime(2023, 03, 20)).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
           ]);
         });
 
         test('respects endDate constraint', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 02, 10),
             days: [1, 15],
             frequency: 1,
@@ -1373,35 +1628,37 @@ void main() {
               schedule.getOccurrencesUntil(DateTime(2023, 03, 20)).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
           ]);
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
 
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 03, 20),
-                  from: DateTime(2023, 01, 16))
+              .getOccurrencesUntil(
+                DateTime(2023, 03, 20),
+                from: DateTime(2023, 01, 16),
+              )
               .toList();
 
           expect(occurrences, [
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
           ]);
         });
 
         test('handles frequency correctly', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1],
             frequency: 2,
           );
@@ -1410,16 +1667,16 @@ void main() {
               schedule.getOccurrencesUntil(DateTime(2023, 07, 20)).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
-            DateTime(2023, 03, 01),
-            DateTime(2023, 05, 01),
-            DateTime(2023, 07, 01),
+            DateTime(2023),
+            DateTime(2023, 03),
+            DateTime(2023, 05),
+            DateTime(2023, 07),
           ]);
         });
 
         test('skips invalid days in short months', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [31],
             frequency: 1,
           );
@@ -1435,7 +1692,7 @@ void main() {
 
         test('returns empty if end date is before start date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1],
             frequency: 1,
           );
@@ -1448,15 +1705,17 @@ void main() {
 
         test('returns empty if from date is after schedule end date', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 01, 05),
             days: [1],
             frequency: 1,
           );
 
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2023, 03, 20),
-                  from: DateTime(2023, 01, 06))
+              .getOccurrencesUntil(
+                DateTime(2023, 03, 20),
+                from: DateTime(2023, 01, 06),
+              )
               .toList();
 
           expect(occurrences, isEmpty);
@@ -1464,43 +1723,46 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
 
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2023, 03, 20),
-              exclude: [DateTime(2023, 01, 15)]).toList();
+            DateTime(2023, 03, 20),
+            exclude: [DateTime(2023, 01, 15)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
-            DateTime(2023, 02, 01), // 01/15 is excluded
+            DateTime(2023),
+            DateTime(2023, 02), // 01/15 is excluded
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
           ]);
         });
 
         test('excludes multiple specified dates from results', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
 
-          final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 04, 20), exclude: [
-            DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
-          ]).toList();
+          final occurrences = schedule.getOccurrencesUntil(
+            DateTime(2023, 04, 20),
+            exclude: [
+              DateTime(2023, 01, 15),
+              DateTime(2023, 02),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 02, 15), // 01/15 and 02/01 are excluded
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
-            DateTime(2023, 04, 01),
+            DateTime(2023, 04),
             DateTime(2023, 04, 15),
           ]);
         });
@@ -1509,7 +1771,7 @@ void main() {
       group('#getNextNOccurrences', () {
         test('returns correct days', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
@@ -1517,16 +1779,16 @@ void main() {
           final occurrences = schedule.getNextNOccurrences(4).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
             DateTime(2023, 02, 15),
           ]);
         });
 
         test('respects endDate', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 03, 10),
             days: [1, 15],
             frequency: 1,
@@ -1535,17 +1797,17 @@ void main() {
           final occurrences = schedule.getNextNOccurrences(6).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
           ]);
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
@@ -1555,16 +1817,16 @@ void main() {
               .toList();
 
           expect(occurrences, [
-            DateTime(2023, 02, 01),
+            DateTime(2023, 02),
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
           ]);
         });
 
         test('skips invalid days in short months', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [31],
             frequency: 1,
           );
@@ -1580,7 +1842,7 @@ void main() {
 
         test('handles starting at the end of a month', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [31],
             frequency: 1,
           );
@@ -1598,7 +1860,7 @@ void main() {
 
         test('handles starting at the end of a month with frequency 2', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [31],
             frequency: 2,
           );
@@ -1616,41 +1878,46 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
 
-          final occurrences = schedule.getNextNOccurrences(5,
-              exclude: [DateTime(2023, 01, 15)]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            5,
+            exclude: [DateTime(2023, 01, 15)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
-            DateTime(2023, 02, 01), // 01/15 is excluded
+            DateTime(2023),
+            DateTime(2023, 02), // 01/15 is excluded
             DateTime(2023, 02, 15),
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
           ]);
         });
 
         test('excludes multiple specified dates from results', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             days: [1, 15],
             frequency: 1,
           );
 
-          final occurrences = schedule.getNextNOccurrences(6, exclude: [
-            DateTime(2023, 01, 15),
-            DateTime(2023, 02, 01),
-          ]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            6,
+            exclude: [
+              DateTime(2023, 01, 15),
+              DateTime(2023, 02),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2023, 01, 01),
+            DateTime(2023),
             DateTime(2023, 02, 15), // 01/15 and 02/01 are excluded
-            DateTime(2023, 03, 01),
+            DateTime(2023, 03),
             DateTime(2023, 03, 15),
-            DateTime(2023, 04, 01),
+            DateTime(2023, 04),
             DateTime(2023, 04, 15),
           ]);
         });
@@ -1660,7 +1927,7 @@ void main() {
         group('constructor', () {
           test('creates timed monthly schedule', () {
             final schedule = Monthly.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               days: [1, 15],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
@@ -1675,15 +1942,15 @@ void main() {
         group('#occursOn', () {
           test('returns true for correct days of month', () {
             final schedule = Monthly.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               days: [1, 15],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
             );
 
-            expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023)), isTrue);
             expect(schedule.occursOn(DateTime(2023, 1, 15)), isTrue);
-            expect(schedule.occursOn(DateTime(2023, 2, 1)), isTrue);
+            expect(schedule.occursOn(DateTime(2023, 2)), isTrue);
             expect(schedule.occursOn(DateTime(2023, 2, 15)), isTrue);
             expect(schedule.occursOn(DateTime(2023, 1, 10)), isFalse);
           });
@@ -1693,7 +1960,7 @@ void main() {
           test('returns occurrences with correct times for monthly schedule',
               () {
             final schedule = Monthly.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               days: [1, 15],
               clockTimes: [ClockTime(hour: 9, minute: 30)],
@@ -1713,7 +1980,7 @@ void main() {
       group('#occursAt', () {
         test('returns true for any time of day for UnTimed schedules', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             days: [1, 15],
           );
@@ -1728,7 +1995,7 @@ void main() {
 
         test('isTimed returns false for UnTimed schedules', () {
           final schedule = Monthly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             days: [1, 15],
           );
@@ -1742,85 +2009,92 @@ void main() {
     group(MonthlyWeekday, () {
       test('throws an error if frequency is less than 1', () {
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 01, 01),
-                  weekday: DateTime.monday,
-                  weekOfMonth: 1,
-                  frequency: 0,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: DateTime.monday,
+            weekOfMonth: 1,
+            frequency: 0,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for invalid weekday values', () {
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: 0, // Invalid weekday
-                  weekOfMonth: 1,
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: 0, // Invalid weekday
+            weekOfMonth: 1,
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
 
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: 8, // Invalid weekday
-                  weekOfMonth: 1,
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: 8, // Invalid weekday
+            weekOfMonth: 1,
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('throws error for invalid weekOfMonth values', () {
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: DateTime.monday,
-                  weekOfMonth: 0, // Invalid weekOfMonth
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: DateTime.monday,
+            weekOfMonth: 0, // Invalid weekOfMonth
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
 
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: DateTime.monday,
-                  weekOfMonth: 6, // Invalid weekOfMonth
-                  frequency: 1,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: DateTime.monday,
+            weekOfMonth: 6, // Invalid weekOfMonth
+            frequency: 1,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       test('accepts valid values including -1 for last occurrence', () {
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: DateTime.monday,
-                  weekOfMonth: -1, // Last occurrence
-                  frequency: 1,
-                ),
-            returnsNormally);
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: DateTime.monday,
+            weekOfMonth: -1, // Last occurrence
+            frequency: 1,
+          ),
+          returnsNormally,
+        );
 
         expect(
-            () => MonthlyWeekday(
-                  startDate: DateTime(2023, 1, 1),
-                  weekday: DateTime.friday,
-                  weekOfMonth: 5, // Fifth occurrence
-                  frequency: 2,
-                ),
-            returnsNormally);
+          () => MonthlyWeekday(
+            startDate: DateTime(2023),
+            weekday: DateTime.friday,
+            weekOfMonth: 5, // Fifth occurrence
+            frequency: 2,
+          ),
+          returnsNormally,
+        );
       });
 
       group('#occursOn', () {
         test('is false on the start date if it is not the correct weekday', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01), // Sunday
+            startDate: DateTime(2023), // Sunday
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2023, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2023)), isFalse);
         });
 
         test('is true on the start date if it matches the pattern', () {
@@ -1836,7 +2110,7 @@ void main() {
 
         test('correctly identifies first Monday of each month', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -1844,43 +2118,59 @@ void main() {
 
           // January 2023: First Monday is Jan 2
           expect(schedule.occursOn(DateTime(2023, 01, 02)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 01, 09)),
-              isFalse); // Second Monday
-          expect(schedule.occursOn(DateTime(2023, 01, 16)),
-              isFalse); // Third Monday
+          expect(
+            schedule.occursOn(DateTime(2023, 01, 09)),
+            isFalse,
+          ); // Second Monday
+          expect(
+            schedule.occursOn(DateTime(2023, 01, 16)),
+            isFalse,
+          ); // Third Monday
 
           // February 2023: First Monday is Feb 6
           expect(schedule.occursOn(DateTime(2023, 02, 06)), isTrue);
-          expect(schedule.occursOn(DateTime(2023, 02, 13)),
-              isFalse); // Second Monday
+          expect(
+            schedule.occursOn(DateTime(2023, 02, 13)),
+            isFalse,
+          ); // Second Monday
         });
 
         test('correctly identifies second Friday of each month', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.friday,
             weekOfMonth: 2,
             frequency: 1,
           );
 
           // January 2023: First Friday is Jan 6, second is Jan 13
-          expect(schedule.occursOn(DateTime(2023, 01, 06)),
-              isFalse); // First Friday
-          expect(schedule.occursOn(DateTime(2023, 01, 13)),
-              isTrue); // Second Friday
-          expect(schedule.occursOn(DateTime(2023, 01, 20)),
-              isFalse); // Third Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 01, 06)),
+            isFalse,
+          ); // First Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 01, 13)),
+            isTrue,
+          ); // Second Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 01, 20)),
+            isFalse,
+          ); // Third Friday
 
           // February 2023: First Friday is Feb 3, second is Feb 10
-          expect(schedule.occursOn(DateTime(2023, 02, 03)),
-              isFalse); // First Friday
-          expect(schedule.occursOn(DateTime(2023, 02, 10)),
-              isTrue); // Second Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 02, 03)),
+            isFalse,
+          ); // First Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 02, 10)),
+            isTrue,
+          ); // Second Friday
         });
 
         test('correctly identifies last Friday of each month', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.friday,
             weekOfMonth: -1, // Last occurrence
             frequency: 1,
@@ -1889,38 +2179,50 @@ void main() {
           // January 2023: Last Friday is Jan 27
           expect(schedule.occursOn(DateTime(2023, 01, 27)), isTrue);
           expect(
-              schedule.occursOn(DateTime(2023, 01, 20)), isFalse); // Not last
+            schedule.occursOn(DateTime(2023, 01, 20)),
+            isFalse,
+          ); // Not last
           expect(
-              schedule.occursOn(DateTime(2023, 01, 13)), isFalse); // Not last
+            schedule.occursOn(DateTime(2023, 01, 13)),
+            isFalse,
+          ); // Not last
 
           // February 2023: Last Friday is Feb 24
           expect(schedule.occursOn(DateTime(2023, 02, 24)), isTrue);
           expect(
-              schedule.occursOn(DateTime(2023, 02, 17)), isFalse); // Not last
+            schedule.occursOn(DateTime(2023, 02, 17)),
+            isFalse,
+          ); // Not last
         });
 
         test('correctly identifies fifth Friday when it exists', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.friday,
             weekOfMonth: 5,
             frequency: 1,
           );
 
           // March 2023: Has 5 Fridays (3, 10, 17, 24, 31)
-          expect(schedule.occursOn(DateTime(2023, 03, 31)),
-              isTrue); // Fifth Friday
-          expect(schedule.occursOn(DateTime(2023, 03, 24)),
-              isFalse); // Fourth Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 03, 31)),
+            isTrue,
+          ); // Fifth Friday
+          expect(
+            schedule.occursOn(DateTime(2023, 03, 24)),
+            isFalse,
+          ); // Fourth Friday
 
           // April 2023: Only has 4 Fridays, so no fifth Friday
-          expect(schedule.occursOn(DateTime(2023, 04, 28)),
-              isFalse); // Last Friday in April
+          expect(
+            schedule.occursOn(DateTime(2023, 04, 28)),
+            isFalse,
+          ); // Last Friday in April
         });
 
         test('respects frequency parameter', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 2, // Every 2 months
@@ -1941,7 +2243,7 @@ void main() {
 
         test('is false before the start date', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -1953,7 +2255,7 @@ void main() {
 
         test('is false after the end date', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             endDate: DateTime(2023, 03, 31),
             weekday: DateTime.monday,
             weekOfMonth: 1,
@@ -1966,7 +2268,7 @@ void main() {
 
         test('is false on wrong weekday', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -1982,7 +2284,7 @@ void main() {
       group('#getNextNOccurrences', () {
         test('returns correct first Monday occurrences', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -1991,17 +2293,23 @@ void main() {
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
           expect(occurrences.length, equals(3));
-          expect(occurrences[0],
-              equals(DateTime(2023, 01, 02))); // First Monday of Jan
-          expect(occurrences[1],
-              equals(DateTime(2023, 02, 06))); // First Monday of Feb
-          expect(occurrences[2],
-              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 01, 02)),
+          ); // First Monday of Jan
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 02, 06)),
+          ); // First Monday of Feb
+          expect(
+            occurrences[2],
+            equals(DateTime(2023, 03, 06)),
+          ); // First Monday of Mar
         });
 
         test('returns correct last Friday occurrences', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.friday,
             weekOfMonth: -1, // Last occurrence
             frequency: 1,
@@ -2010,17 +2318,23 @@ void main() {
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
           expect(occurrences.length, equals(3));
-          expect(occurrences[0],
-              equals(DateTime(2023, 01, 27))); // Last Friday of Jan
-          expect(occurrences[1],
-              equals(DateTime(2023, 02, 24))); // Last Friday of Feb
-          expect(occurrences[2],
-              equals(DateTime(2023, 03, 31))); // Last Friday of Mar
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 01, 27)),
+          ); // Last Friday of Jan
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 02, 24)),
+          ); // Last Friday of Feb
+          expect(
+            occurrences[2],
+            equals(DateTime(2023, 03, 31)),
+          ); // Last Friday of Mar
         });
 
         test('respects frequency parameter', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 2, // Every 2 months
@@ -2030,34 +2344,42 @@ void main() {
 
           expect(occurrences.length, equals(3));
           expect(occurrences[0], equals(DateTime(2023, 01, 02))); // January
-          expect(occurrences[1],
-              equals(DateTime(2023, 03, 06))); // March (skipped Feb)
-          expect(occurrences[2],
-              equals(DateTime(2023, 05, 01))); // May (skipped Apr)
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 03, 06)),
+          ); // March (skipped Feb)
+          expect(
+            occurrences[2],
+            equals(DateTime(2023, 05)),
+          ); // May (skipped Apr)
         });
 
         test('handles from parameter correctly', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
           );
 
           final occurrences = schedule
-              .getNextNOccurrences(2, from: DateTime(2023, 03, 01))
+              .getNextNOccurrences(2, from: DateTime(2023, 03))
               .toList();
 
           expect(occurrences.length, equals(2));
-          expect(occurrences[0],
-              equals(DateTime(2023, 03, 06))); // First Monday of Mar
-          expect(occurrences[1],
-              equals(DateTime(2023, 04, 03))); // First Monday of Apr
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 03, 06)),
+          ); // First Monday of Mar
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 04, 03)),
+          ); // First Monday of Apr
         });
 
         test('excludes specified dates', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -2068,14 +2390,24 @@ void main() {
               schedule.getNextNOccurrences(3, exclude: exclude).toList();
 
           expect(occurrences.length, equals(3));
-          expect(occurrences[0],
-              equals(DateTime(2023, 01, 02))); // First Monday of Jan
           expect(
-              occurrences[1],
-              equals(DateTime(
-                  2023, 03, 06))); // First Monday of Mar (Feb excluded)
-          expect(occurrences[2],
-              equals(DateTime(2023, 04, 03))); // First Monday of Apr
+            occurrences[0],
+            equals(DateTime(2023, 01, 02)),
+          ); // First Monday of Jan
+          expect(
+            occurrences[1],
+            equals(
+              DateTime(
+                2023,
+                03,
+                06,
+              ),
+            ),
+          ); // First Monday of Mar (Feb excluded)
+          expect(
+            occurrences[2],
+            equals(DateTime(2023, 04, 03)),
+          ); // First Monday of Apr
         });
 
         test('handles start date that is not the first day of month', () {
@@ -2088,37 +2420,47 @@ void main() {
 
           final occurrences = schedule.getNextNOccurrences(2).toList();
           expect(occurrences.length, equals(2));
-          expect(occurrences[0],
-              equals(DateTime(2023, 02, 06))); // First Monday of Feb
-          expect(occurrences[1],
-              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 02, 06)),
+          ); // First Monday of Feb
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 03, 06)),
+          ); // First Monday of Mar
         });
       });
 
       group('#getOccurrencesUntil', () {
         test('returns all occurrences within date range', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
           );
 
           final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2023, 04)).toList();
 
           expect(occurrences.length, equals(3));
-          expect(occurrences[0],
-              equals(DateTime(2023, 01, 02))); // First Monday of Jan
-          expect(occurrences[1],
-              equals(DateTime(2023, 02, 06))); // First Monday of Feb
-          expect(occurrences[2],
-              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 01, 02)),
+          ); // First Monday of Jan
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 02, 06)),
+          ); // First Monday of Feb
+          expect(
+            occurrences[2],
+            equals(DateTime(2023, 03, 06)),
+          ); // First Monday of Mar
         });
 
         test('returns empty list when end date is before start date', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -2131,7 +2473,7 @@ void main() {
 
         test('respects from parameter', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -2139,21 +2481,25 @@ void main() {
 
           final occurrences = schedule
               .getOccurrencesUntil(
-                DateTime(2023, 04, 01),
-                from: DateTime(2023, 02, 01),
+                DateTime(2023, 04),
+                from: DateTime(2023, 02),
               )
               .toList();
 
           expect(occurrences.length, equals(2));
-          expect(occurrences[0],
-              equals(DateTime(2023, 02, 06))); // First Monday of Feb
-          expect(occurrences[1],
-              equals(DateTime(2023, 03, 06))); // First Monday of Mar
+          expect(
+            occurrences[0],
+            equals(DateTime(2023, 02, 06)),
+          ); // First Monday of Feb
+          expect(
+            occurrences[1],
+            equals(DateTime(2023, 03, 06)),
+          ); // First Monday of Mar
         });
 
         test('excludes specified dates', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.monday,
             weekOfMonth: 1,
             frequency: 1,
@@ -2162,23 +2508,31 @@ void main() {
           final exclude = [DateTime(2023, 02, 06)]; // First Monday of February
           final occurrences = schedule
               .getOccurrencesUntil(
-                DateTime(2023, 04, 01),
+                DateTime(2023, 04),
                 exclude: exclude,
               )
               .toList();
 
           expect(occurrences.length, equals(2));
-          expect(occurrences[0],
-              equals(DateTime(2023, 01, 02))); // First Monday of Jan
           expect(
-              occurrences[1],
-              equals(DateTime(
-                  2023, 03, 06))); // First Monday of Mar (Feb excluded)
+            occurrences[0],
+            equals(DateTime(2023, 01, 02)),
+          ); // First Monday of Jan
+          expect(
+            occurrences[1],
+            equals(
+              DateTime(
+                2023,
+                03,
+                06,
+              ),
+            ),
+          ); // First Monday of Mar (Feb excluded)
         });
 
         test('handles months with different numbers of weekdays', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             weekday: DateTime.friday,
             weekOfMonth: 5, // Fifth Friday
             frequency: 1,
@@ -2186,20 +2540,24 @@ void main() {
 
           // March 2023 has 5 Fridays, April 2023 has 4 Fridays
           final marchOccurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 04, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2023, 04)).toList();
           expect(marchOccurrences.length, equals(1));
-          expect(marchOccurrences[0],
-              equals(DateTime(2023, 03, 31))); // Fifth Friday of March
+          expect(
+            marchOccurrences[0],
+            equals(DateTime(2023, 03, 31)),
+          ); // Fifth Friday of March
 
           final aprilOccurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 05, 01)).toList();
-          expect(aprilOccurrences.length,
-              equals(1)); // Still only March occurrence
+              schedule.getOccurrencesUntil(DateTime(2023, 05)).toList();
+          expect(
+            aprilOccurrences.length,
+            equals(1),
+          ); // Still only March occurrence
         });
 
         test('handles leap year February correctly', () {
           final schedule = MonthlyWeekday(
-            startDate: DateTime(2024, 01, 01), // 2024 is a leap year
+            startDate: DateTime(2024), // 2024 is a leap year
             weekday: DateTime.thursday,
             weekOfMonth: 5, // Fifth Thursday
             frequency: 1,
@@ -2207,12 +2565,14 @@ void main() {
 
           // February 2024 has 5 Thursdays due to leap year
           final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2024, 03, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2024, 03)).toList();
           expect(occurrences.length, equals(1));
           expect(
-              occurrences[0],
-              equals(
-                  DateTime(2024, 02, 29))); // Fifth Thursday of February 2024
+            occurrences[0],
+            equals(
+              DateTime(2024, 02, 29),
+            ),
+          ); // Fifth Thursday of February 2024
         });
       });
 
@@ -2220,7 +2580,7 @@ void main() {
         group('constructor', () {
           test('creates timed monthly weekday schedule', () {
             final schedule = MonthlyWeekday.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
@@ -2236,7 +2596,7 @@ void main() {
         group('#occursOn', () {
           test('returns true for correct weekday of month', () {
             final schedule = MonthlyWeekday.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
@@ -2245,19 +2605,23 @@ void main() {
 
             // First Monday of January 2023 is January 2
             expect(schedule.occursOn(DateTime(2023, 1, 2)), isTrue);
-            expect(schedule.occursOn(DateTime(2023, 2, 6)),
-                isTrue); // First Monday of February
-            expect(schedule.occursOn(DateTime(2023, 1, 9)),
-                isFalse); // Second Monday
+            expect(
+              schedule.occursOn(DateTime(2023, 2, 6)),
+              isTrue,
+            ); // First Monday of February
+            expect(
+              schedule.occursOn(DateTime(2023, 1, 9)),
+              isFalse,
+            ); // Second Monday
           });
         });
 
         group('#getNextNOccurrences', () {
           test(
-              'returns occurrences with correct times for monthly weekday schedule',
-              () {
+              'returns occurrences with correct times for monthly '
+              'weekday schedule', () {
             final schedule = MonthlyWeekday.timed(
-              startDate: DateTime(2023, 1, 1),
+              startDate: DateTime(2023),
               frequency: 1,
               weekday: DateTime.monday,
               weekOfMonth: 1,
@@ -2267,14 +2631,20 @@ void main() {
             final occurrences = schedule.getNextNOccurrences(3).toList();
 
             expect(occurrences, hasLength(3));
-            expect(occurrences[0],
-                equals(DateTime(2023, 1, 2, 9, 30))); // First Monday of January
             expect(
-                occurrences[1],
-                equals(
-                    DateTime(2023, 2, 6, 9, 30))); // First Monday of February
-            expect(occurrences[2],
-                equals(DateTime(2023, 3, 6, 9, 30))); // First Monday of March
+              occurrences[0],
+              equals(DateTime(2023, 1, 2, 9, 30)),
+            ); // First Monday of January
+            expect(
+              occurrences[1],
+              equals(
+                DateTime(2023, 2, 6, 9, 30),
+              ),
+            ); // First Monday of February
+            expect(
+              occurrences[2],
+              equals(DateTime(2023, 3, 6, 9, 30)),
+            ); // First Monday of March
           });
         });
       });
@@ -2283,11 +2653,12 @@ void main() {
     group(Yearly, () {
       test('throws an error if frequency is less than 1', () {
         expect(
-            () => Yearly(
-                  startDate: DateTime(2023, 01, 01),
-                  frequency: 0,
-                ),
-            throwsA(isA<ArgumentError>()));
+          () => Yearly(
+            startDate: DateTime(2023),
+            frequency: 0,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
       });
 
       group('#occursOn', () {
@@ -2313,115 +2684,136 @@ void main() {
 
         test('is false on an incorrect date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 2,
           );
 
-          expect(schedule.occursOn(DateTime(2024, 01, 01)), isFalse);
-          expect(schedule.occursOn(DateTime(2026, 01, 01)), isFalse);
-          expect(schedule.occursOn(DateTime(2028, 01, 01)), isFalse);
-          expect(schedule.occursOn(DateTime(2030, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2024)), isFalse);
+          expect(schedule.occursOn(DateTime(2026)), isFalse);
+          expect(schedule.occursOn(DateTime(2028)), isFalse);
+          expect(schedule.occursOn(DateTime(2030)), isFalse);
         });
 
         test('is false before the start date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2022, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2022)), isFalse);
         });
 
         test('is false after the end date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
-            endDate: DateTime(2025, 01, 01),
+            startDate: DateTime(2023),
+            endDate: DateTime(2025),
             frequency: 1,
           );
 
-          expect(schedule.occursOn(DateTime(2026, 01, 01)), isFalse);
+          expect(schedule.occursOn(DateTime(2026)), isFalse);
         });
 
         test('handles very large frequency', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 10, // Every 10 years
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2033, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2024, 1, 1)), isFalse);
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
+          expect(schedule.occursOn(DateTime(2033)), isTrue);
+          expect(schedule.occursOn(DateTime(2024)), isFalse);
         });
       });
 
       group('#getOccurrencesUntil', () {
+        test('does not return occurrences before the from date', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 6),
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getOccurrencesUntil(
+                DateTime(2026, 12, 31),
+                from: DateTime(2024, 12, 31),
+              )
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2025, 6),
+            DateTime(2026, 6),
+          ]);
+        });
+
         test('returns correct occurrences until end date', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
           final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2023, 01, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2023)).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2021, 01, 01),
-            DateTime(2022, 01, 01),
-            DateTime(2023, 01, 01), // Included because it's the end date
+            DateTime(2020),
+            DateTime(2021),
+            DateTime(2022),
+            DateTime(2023), // Included because it's the end date
           ]);
         });
 
         test('respects endDate constraint', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
-            endDate: DateTime(2022, 01, 01),
+            startDate: DateTime(2020),
+            endDate: DateTime(2022),
             frequency: 1,
           );
 
           final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2025, 01, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2025)).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2021, 01, 01),
-            DateTime(2022, 01, 01),
+            DateTime(2020),
+            DateTime(2021),
+            DateTime(2022),
           ]);
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 2,
           );
 
           final occurrences = schedule
-              .getOccurrencesUntil(DateTime(2026, 01, 01),
-                  from: DateTime(2021, 06, 15))
+              .getOccurrencesUntil(
+                DateTime(2026),
+                from: DateTime(2021, 06, 15),
+              )
               .toList();
 
           expect(occurrences, [
-            DateTime(2022, 01, 01),
-            DateTime(2024, 01, 01),
-            DateTime(2026, 01, 01), // Included because it's the end date
+            DateTime(2022),
+            DateTime(2024),
+            DateTime(2026), // Included because it's the end date
           ]);
         });
 
         test('handles frequency correctly', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 2,
           );
 
           final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2028, 01, 01)).toList();
+              schedule.getOccurrencesUntil(DateTime(2028)).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01),
-            DateTime(2024, 01, 01),
-            DateTime(2026, 01, 01),
-            DateTime(2028, 01, 01), // Included because it's the end date
+            DateTime(2020),
+            DateTime(2022),
+            DateTime(2024),
+            DateTime(2026),
+            DateTime(2028), // Included because it's the end date
           ]);
         });
 
@@ -2478,7 +2870,7 @@ void main() {
 
         test('returns empty if end date is before start date', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 01, 01),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -2490,41 +2882,44 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
           final occurrences = schedule.getOccurrencesUntil(
-              DateTime(2025, 01, 01),
-              exclude: [DateTime(2021, 01, 01)]).toList();
+            DateTime(2025),
+            exclude: [DateTime(2021)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01), // 2021 is excluded
-            DateTime(2023, 01, 01),
-            DateTime(2024, 01, 01),
-            DateTime(2025, 01, 01),
+            DateTime(2020),
+            DateTime(2022), // 2021 is excluded
+            DateTime(2023),
+            DateTime(2024),
+            DateTime(2025),
           ]);
         });
 
         test('excludes multiple specified dates from results', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
-          final occurrences =
-              schedule.getOccurrencesUntil(DateTime(2026, 01, 01), exclude: [
-            DateTime(2021, 01, 01),
-            DateTime(2023, 01, 01),
-          ]).toList();
+          final occurrences = schedule.getOccurrencesUntil(
+            DateTime(2026),
+            exclude: [
+              DateTime(2021),
+              DateTime(2023),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01), // 2021 and 2023 are excluded
-            DateTime(2024, 01, 01),
-            DateTime(2025, 01, 01),
-            DateTime(2026, 01, 01),
+            DateTime(2020),
+            DateTime(2022), // 2021 and 2023 are excluded
+            DateTime(2024),
+            DateTime(2025),
+            DateTime(2026),
           ]);
         });
       });
@@ -2532,53 +2927,98 @@ void main() {
       group('#getNextNOccurrences', () {
         test('returns correct dates', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2021, 01, 01),
-            DateTime(2022, 01, 01),
+            DateTime(2020),
+            DateTime(2021),
+            DateTime(2022),
+          ]);
+        });
+
+        test('does not return occurrences before the from date', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 6),
+            frequency: 1,
+          );
+
+          final occurrences = schedule
+              .getNextNOccurrences(2, from: DateTime(2024, 12, 31))
+              .toList();
+
+          expect(occurrences, [
+            DateTime(2025, 6),
+            DateTime(2026, 6),
+          ]);
+        });
+
+        test('does not return occurrences before the start date', () {
+          final schedule = Yearly(
+            startDate: DateTime(2020, 6),
+            frequency: 1,
+          );
+
+          final occurrences =
+              schedule.getNextNOccurrences(1, from: DateTime(2019)).toList();
+
+          expect(occurrences, [DateTime(2020, 6)]);
+        });
+
+        test('skips non-leap century years for Feb 29 schedules', () {
+          final schedule = Yearly(
+            startDate: DateTime(2096, 2, 29),
+            frequency: 1,
+          );
+
+          final occurrences = schedule.getNextNOccurrences(3).toList();
+
+          // 2100 is not a leap year, so the next occurrences after 2096
+          // are 2104 and 2108.
+          expect(occurrences, [
+            DateTime(2096, 2, 29),
+            DateTime(2104, 2, 29),
+            DateTime(2108, 2, 29),
           ]);
         });
 
         test('returns correct dates with frequency', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 2,
           );
 
           final occurrences = schedule.getNextNOccurrences(3).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01),
-            DateTime(2024, 01, 01),
+            DateTime(2020),
+            DateTime(2022),
+            DateTime(2024),
           ]);
         });
 
         test('respects endDate', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
-            endDate: DateTime(2024, 01, 01),
+            startDate: DateTime(2020),
+            endDate: DateTime(2024),
             frequency: 2,
           );
 
           final occurrences = schedule.getNextNOccurrences(5).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01),
-            DateTime(2024, 01, 01),
+            DateTime(2020),
+            DateTime(2022),
+            DateTime(2024),
           ]);
         });
 
         test('returns correct occurrences when starting mid-pattern', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 2,
           );
 
@@ -2587,9 +3027,9 @@ void main() {
               .toList();
 
           expect(occurrences, [
-            DateTime(2022, 01, 01),
-            DateTime(2024, 01, 01),
-            DateTime(2026, 01, 01),
+            DateTime(2022),
+            DateTime(2024),
+            DateTime(2026),
           ]);
         });
 
@@ -2643,38 +3083,43 @@ void main() {
 
         test('excludes specified dates from results', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
-          final occurrences = schedule.getNextNOccurrences(4,
-              exclude: [DateTime(2021, 01, 01)]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            4,
+            exclude: [DateTime(2021)],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01), // 2021 is excluded
-            DateTime(2023, 01, 01),
-            DateTime(2024, 01, 01),
+            DateTime(2020),
+            DateTime(2022), // 2021 is excluded
+            DateTime(2023),
+            DateTime(2024),
           ]);
         });
 
         test('excludes multiple specified dates from results', () {
           final schedule = Yearly(
-            startDate: DateTime(2020, 01, 01),
+            startDate: DateTime(2020),
             frequency: 1,
           );
 
-          final occurrences = schedule.getNextNOccurrences(5, exclude: [
-            DateTime(2021, 01, 01),
-            DateTime(2023, 01, 01),
-          ]).toList();
+          final occurrences = schedule.getNextNOccurrences(
+            5,
+            exclude: [
+              DateTime(2021),
+              DateTime(2023),
+            ],
+          ).toList();
 
           expect(occurrences, [
-            DateTime(2020, 01, 01),
-            DateTime(2022, 01, 01), // 2021 and 2023 are excluded
-            DateTime(2024, 01, 01),
-            DateTime(2025, 01, 01),
-            DateTime(2026, 01, 01),
+            DateTime(2020),
+            DateTime(2022), // 2021 and 2023 are excluded
+            DateTime(2024),
+            DateTime(2025),
+            DateTime(2026),
           ]);
         });
       });
@@ -2684,7 +3129,7 @@ void main() {
       group('constructor', () {
         test('creates timed yearly schedule', () {
           final schedule = Yearly.timed(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
@@ -2698,22 +3143,22 @@ void main() {
       group('#occursOn', () {
         test('returns true for same day and month', () {
           final schedule = Yearly.timed(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
 
-          expect(schedule.occursOn(DateTime(2023, 1, 1)), isTrue);
-          expect(schedule.occursOn(DateTime(2024, 1, 1)), isTrue);
+          expect(schedule.occursOn(DateTime(2023)), isTrue);
+          expect(schedule.occursOn(DateTime(2024)), isTrue);
           expect(schedule.occursOn(DateTime(2023, 1, 2)), isFalse);
-          expect(schedule.occursOn(DateTime(2023, 2, 1)), isFalse);
+          expect(schedule.occursOn(DateTime(2023, 2)), isFalse);
         });
       });
 
       group('#getNextNOccurrences', () {
         test('returns occurrences with correct times for yearly schedule', () {
           final schedule = Yearly.timed(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
             clockTimes: [ClockTime(hour: 9, minute: 30)],
           );
@@ -2730,7 +3175,7 @@ void main() {
       group('#occursAt', () {
         test('returns true for any time of day for UnTimed schedules', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -2744,7 +3189,7 @@ void main() {
 
         test('isTimed returns false for UnTimed schedules', () {
           final schedule = Yearly(
-            startDate: DateTime(2023, 1, 1),
+            startDate: DateTime(2023),
             frequency: 1,
           );
 
@@ -2756,16 +3201,19 @@ void main() {
   });
 
   group('findNextNOccurrences', () {
-    test('''given n required occurrences if the end date happens 
+    test('''
+given n required occurrences if the end date happens 
       before the n'th occurrence the method returns a lower number 
       of occurrences within the start-date and end-date constraint''', () {
-      Schedule schedule = Weekly(
-          endDate: DateTime.parse('2024-09-21 00:00:00.000Z'),
-          startDate: DateTime.parse('2024-05-20 00:00:00.000Z'),
-          frequency: 1,
-          weekdays: [2]);
+      final Schedule schedule = Weekly(
+        endDate: DateTime.parse('2024-09-21 00:00:00.000Z'),
+        startDate: DateTime.parse('2024-05-20 00:00:00.000Z'),
+        frequency: 1,
+        weekdays: [2],
+      );
 
-      List<DateTime> listDates =
+      final listDates =
+          // The deprecated method is exactly what this test covers.
           // ignore: deprecated_member_use_from_same_package
           schedule.findNextNOccurrences(33, fromDate: schedule.startDate);
 
@@ -2774,48 +3222,86 @@ void main() {
     });
   });
 
+  group('findNextTillDateOccurrences', () {
+    test(
+        'returns occurrences from the from date up to (but not including) '
+        'the till date', () {
+      final schedule = Daily(startDate: DateTime(2024), frequency: 1);
+
+      // The deprecated method is exactly what this test covers.
+      // ignore: deprecated_member_use_from_same_package
+      final dates = schedule.findNextTillDateOccurrences(
+        DateTime(2024, 01, 05),
+        fromDate: DateTime(2024),
+      );
+
+      expect(dates, [
+        DateTime(2024),
+        DateTime(2024, 01, 02),
+        DateTime(2024, 01, 03),
+        DateTime(2024, 01, 04),
+      ]);
+    });
+
+    test('excludes the given dates', () {
+      final schedule = Daily(startDate: DateTime(2024), frequency: 1);
+
+      // The deprecated method is exactly what this test covers.
+      // ignore: deprecated_member_use_from_same_package
+      final dates = schedule.findNextTillDateOccurrences(
+        DateTime(2024, 01, 05),
+        fromDate: DateTime(2024),
+        excludeDates: [DateTime(2024, 01, 02)],
+      );
+
+      expect(dates, [
+        DateTime(2024),
+        DateTime(2024, 01, 03),
+        DateTime(2024, 01, 04),
+      ]);
+    });
+  });
+
+  // Correctness at scale; wall-clock assertions are intentionally avoided
+  // because they are flaky on throttled CI runners.
   group('Performance Tests', () {
-    test('handles large number of occurrences efficiently', () {
-      final schedule = Daily(startDate: DateTime(2023, 1, 1), frequency: 1);
-      final stopwatch = Stopwatch()..start();
+    test('handles large number of occurrences', () {
+      final schedule = Daily(startDate: DateTime(2023), frequency: 1);
 
       final occurrences = schedule.getNextNOccurrences(1000).toList();
 
-      stopwatch.stop();
       expect(occurrences.length, equals(1000));
-      expect(occurrences.last,
-          equals(DateTime(2023, 1, 1).add(Duration(days: 999))));
-      expect(stopwatch.elapsedMilliseconds, lessThan(100)); // Should be fast
+      expect(
+        occurrences.last,
+        equals(DateTime(2023).add(const Duration(days: 999))),
+      );
     });
 
-    test('handles large frequency efficiently', () {
-      final schedule = Daily(startDate: DateTime(2023, 1, 1), frequency: 1000);
-      final stopwatch = Stopwatch()..start();
+    test('handles large frequency', () {
+      final schedule = Daily(startDate: DateTime(2023), frequency: 1000);
 
       final occurrences = schedule.getNextNOccurrences(10).toList();
 
-      stopwatch.stop();
       expect(occurrences.length, equals(10));
-      expect(occurrences[1],
-          equals(DateTime(2023, 1, 1).add(Duration(days: 1000))));
-      expect(stopwatch.elapsedMilliseconds, lessThan(50)); // Should be fast
+      expect(
+        occurrences[1],
+        equals(DateTime(2023).add(const Duration(days: 1000))),
+      );
     });
 
-    test('handles large date ranges efficiently', () {
+    test('handles large date ranges', () {
       final schedule = Daily(
-        startDate: DateTime(2023, 1, 1),
+        startDate: DateTime(2023),
         frequency: 1,
-        endDate: DateTime(2025, 1, 1),
+        endDate: DateTime(2025),
       );
 
-      final stopwatch = Stopwatch()..start();
-      final occurrences =
-          schedule.getOccurrencesUntil(DateTime(2025, 1, 1)).toList();
-      stopwatch.stop();
+      final occurrences = schedule.getOccurrencesUntil(DateTime(2025)).toList();
 
-      expect(occurrences.length,
-          equals(732)); // 2 years + 1 day (including end date)
-      expect(stopwatch.elapsedMilliseconds, lessThan(200)); // Should be fast
+      expect(
+        occurrences.length,
+        equals(732),
+      ); // 2 years + 1 day (including end date)
     });
   });
 
@@ -2845,8 +3331,7 @@ void main() {
         frequency: 3,
       );
 
-      final reports =
-          schedule.getOccurrencesUntil(DateTime(2024, 1, 1)).toList();
+      final reports = schedule.getOccurrencesUntil(DateTime(2024)).toList();
       expect(reports.length, equals(4)); // Q1, Q2, Q3, Q4
       expect(reports[0], equals(DateTime(2023, 1, 15)));
       expect(reports[1], equals(DateTime(2023, 4, 15)));
@@ -2881,19 +3366,20 @@ void main() {
     test('monthly rent payment schedule', () {
       // First day of every month
       final schedule = Monthly(
-        startDate: DateTime(2023, 1, 1),
+        startDate: DateTime(2023),
         days: [1],
         frequency: 1,
       );
 
-      final payments =
-          schedule.getOccurrencesUntil(DateTime(2024, 1, 1)).toList();
+      final payments = schedule.getOccurrencesUntil(DateTime(2024)).toList();
       expect(
-          payments.length,
-          equals(
-              13)); // 12 months + 1 (end date is included because it matches the schedule pattern)
-      expect(payments[0], equals(DateTime(2023, 1, 1)));
-      expect(payments[11], equals(DateTime(2023, 12, 1)));
+        payments.length,
+        equals(
+          13,
+        ),
+      ); // 12 months + 1 (end date matches the schedule pattern)
+      expect(payments[0], equals(DateTime(2023)));
+      expect(payments[11], equals(DateTime(2023, 12)));
     });
 
     test('annual subscription renewal', () {
@@ -2915,27 +3401,29 @@ void main() {
     test('complex monthly schedule with multiple days', () {
       // Every 2 months on the 1st, 15th, and last day
       final schedule = Monthly(
-        startDate: DateTime(2023, 1, 1),
+        startDate: DateTime(2023),
         days: [1, 15, 31], // Including last day
         frequency: 2,
       );
 
       final occurrences =
-          schedule.getOccurrencesUntil(DateTime(2023, 7, 1)).toList();
+          schedule.getOccurrencesUntil(DateTime(2023, 7)).toList();
       expect(
-          occurrences.length,
-          equals(
-              10)); // Jan, Mar, May, Jul: each has 1st and 15th, Jan/Mar/May have 31st, Jul only 1st (end date). So: Jan(3), Mar(3), May(3), Jul(1) = 10.
-      expect(occurrences[0], equals(DateTime(2023, 1, 1)));
+        occurrences.length,
+        equals(
+          10,
+        ),
+      ); // Jan, Mar, May, Jul: each has 1st and 15th, Jan/Mar/May have 31st, Jul only 1st (end date). So: Jan(3), Mar(3), May(3), Jul(1) = 10.
+      expect(occurrences[0], equals(DateTime(2023)));
       expect(occurrences[1], equals(DateTime(2023, 1, 15)));
       expect(occurrences[2], equals(DateTime(2023, 1, 31)));
-      expect(occurrences[3], equals(DateTime(2023, 3, 1)));
+      expect(occurrences[3], equals(DateTime(2023, 3)));
       expect(occurrences[4], equals(DateTime(2023, 3, 15)));
       expect(occurrences[5], equals(DateTime(2023, 3, 31)));
-      expect(occurrences[6], equals(DateTime(2023, 5, 1)));
+      expect(occurrences[6], equals(DateTime(2023, 5)));
       expect(occurrences[7], equals(DateTime(2023, 5, 15)));
       expect(occurrences[8], equals(DateTime(2023, 5, 31)));
-      expect(occurrences[9], equals(DateTime(2023, 7, 1))); // End date
+      expect(occurrences[9], equals(DateTime(2023, 7))); // End date
     });
 
     test('weekly schedule across month boundaries', () {
@@ -2949,9 +3437,11 @@ void main() {
       final occurrences =
           schedule.getOccurrencesUntil(DateTime(2023, 2, 15)).toList();
       expect(
-          occurrences.length,
-          equals(
-              9)); // There are 9 Tuesdays/Fridays between 2023-01-15 and 2023-02-15 inclusive
+        occurrences.length,
+        equals(
+          9,
+        ),
+      ); // There are 9 Tuesdays/Fridays between 2023-01-15 and 2023-02-15 inclusive
       expect(occurrences[0], equals(DateTime(2023, 1, 17))); // First Tuesday
       expect(occurrences[1], equals(DateTime(2023, 1, 20))); // First Friday
       expect(occurrences[2], equals(DateTime(2023, 1, 24))); // Second Tuesday
@@ -2960,8 +3450,10 @@ void main() {
       expect(occurrences[5], equals(DateTime(2023, 2, 3))); // Third Friday
       expect(occurrences[6], equals(DateTime(2023, 2, 7))); // Fourth Tuesday
       expect(occurrences[7], equals(DateTime(2023, 2, 10))); // Fourth Friday
-      expect(occurrences[8],
-          equals(DateTime(2023, 2, 14))); // Fifth Tuesday (end date)
+      expect(
+        occurrences[8],
+        equals(DateTime(2023, 2, 14)),
+      ); // Fifth Tuesday (end date)
     });
   });
 
@@ -2969,7 +3461,7 @@ void main() {
     group('Timed Schedule Edge Cases', () {
       test('handles multiple times per day correctly', () {
         final schedule = Daily.timed(
-          startDate: DateTime(2023, 1, 1),
+          startDate: DateTime(2023),
           frequency: 1,
           clockTimes: [
             ClockTime(hour: 8, minute: 0),
@@ -2981,17 +3473,17 @@ void main() {
         final occurrences = schedule.getNextNOccurrences(6).toList();
 
         expect(occurrences, hasLength(6));
-        expect(occurrences[0], equals(DateTime(2023, 1, 1, 8, 0)));
-        expect(occurrences[1], equals(DateTime(2023, 1, 1, 12, 0)));
-        expect(occurrences[2], equals(DateTime(2023, 1, 1, 18, 0)));
-        expect(occurrences[3], equals(DateTime(2023, 1, 2, 8, 0)));
-        expect(occurrences[4], equals(DateTime(2023, 1, 2, 12, 0)));
-        expect(occurrences[5], equals(DateTime(2023, 1, 2, 18, 0)));
+        expect(occurrences[0], equals(DateTime(2023, 1, 1, 8)));
+        expect(occurrences[1], equals(DateTime(2023, 1, 1, 12)));
+        expect(occurrences[2], equals(DateTime(2023, 1, 1, 18)));
+        expect(occurrences[3], equals(DateTime(2023, 1, 2, 8)));
+        expect(occurrences[4], equals(DateTime(2023, 1, 2, 12)));
+        expect(occurrences[5], equals(DateTime(2023, 1, 2, 18)));
       });
 
       test('handles times with seconds and milliseconds', () {
         final schedule = Daily.timed(
-          startDate: DateTime(2023, 1, 1),
+          startDate: DateTime(2023),
           frequency: 1,
           clockTimes: [
             ClockTime(hour: 9, minute: 30, second: 45, millisecond: 123),
@@ -3007,7 +3499,7 @@ void main() {
 
       test('handles end date constraint for timed schedules', () {
         final schedule = Daily.timed(
-          startDate: DateTime(2023, 1, 1),
+          startDate: DateTime(2023),
           frequency: 1,
           clockTimes: [ClockTime(hour: 9, minute: 30)],
           endDate: DateTime(2023, 1, 2),
@@ -3023,7 +3515,7 @@ void main() {
 
       test('handles exclusion of specific times', () {
         final schedule = Daily.timed(
-          startDate: DateTime(2023, 1, 1),
+          startDate: DateTime(2023),
           frequency: 1,
           clockTimes: [ClockTime(hour: 9, minute: 30)],
         );

@@ -2,11 +2,6 @@ part of 'schedule_base.dart';
 
 /// Represents a schedule that occurs only once.
 class Singular extends Schedule {
-  Singular._internal({
-    required super.startDate,
-    super.timingMode,
-  });
-
   /// Creates a singular schedule that occurs on the given [date].
   factory Singular({
     required DateTime date,
@@ -15,8 +10,13 @@ class Singular extends Schedule {
       startDate: date,
     );
   }
+  Singular._internal({
+    required super.startDate,
+    super.timingMode,
+  });
 
-  /// Creates a singular schedule that occurs on the given date at the given time.
+  /// Creates a singular schedule that occurs on the given date at the
+  /// given time.
   factory Singular.timed({
     required DateTime date,
     required ClockTime clockTime,
@@ -36,14 +36,17 @@ class Singular extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) {
-    final isAfterStartDate = from != null && from.isLaterDateThan(startDate);
-    final isExcluded = exclude?.any(startDate.isSameDateAs) ?? false;
-
-    if (isAfterStartDate || isExcluded) {
+    if (n < 1) {
       return const [];
     }
 
-    return [startDate.startOfDay()];
+    final isAfterStartDate = from != null && from.isLaterDateThan(startDate);
+
+    if (isAfterStartDate || _isExcluded(startDate, exclude)) {
+      return const [];
+    }
+
+    return _generateTimedOccurrences(startDate.startOfDay()).take(n).toList();
   }
 
   @override
@@ -52,15 +55,14 @@ class Singular extends Schedule {
     DateTime? from,
     Iterable<DateTime>? exclude,
   }) {
-    final date = from ?? startDate;
-    final isAfterStartDate = date.isLaterDateThan(startDate);
-    final isAfterEndDate = date.isLaterDateThan(end);
-    final isExcluded = exclude?.any(date.isSameDateAs) ?? false;
+    final isAfterStartDate = from != null && from.isLaterDateThan(startDate);
 
-    if (isAfterStartDate || isAfterEndDate || isExcluded) {
+    if (isAfterStartDate ||
+        startDate.isLaterDateThan(end) ||
+        _isExcluded(startDate, exclude)) {
       return const [];
     }
 
-    return [startDate.startOfDay()];
+    return _generateTimedOccurrences(startDate.startOfDay()).toList();
   }
 }
