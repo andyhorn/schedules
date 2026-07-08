@@ -1,12 +1,31 @@
 part of 'schedule_base.dart';
 
-/// Represents a schedule that occurs every _n_ months on the given [weekday] and [weekOfMonth].
+/// Represents a schedule that occurs every _n_ months on the given
+/// [weekday] and [weekOfMonth].
 ///
 /// Throws an [ArgumentError] if:
 /// - [frequency] is less than 1
 /// - [weekday] is not between 1 and 7, inclusive
-/// - [weekOfMonth] is not between 1 and 5, inclusive, or -1 for the last occurrence of month
+/// - [weekOfMonth] is not between 1 and 5, inclusive, or -1 for the last
+///   occurrence of month
 class MonthlyWeekday extends Schedule {
+  /// Creates a monthly weekday schedule that occurs on the given
+  /// [weekday] and [weekOfMonth].
+  factory MonthlyWeekday({
+    required DateTime startDate,
+    required int frequency,
+    required int weekday,
+    required int weekOfMonth,
+    DateTime? endDate,
+  }) {
+    return MonthlyWeekday._internal(
+      startDate: startDate,
+      endDate: endDate,
+      frequency: frequency,
+      weekday: weekday,
+      weekOfMonth: weekOfMonth,
+    );
+  }
   MonthlyWeekday._internal({
     required super.startDate,
     required this.frequency,
@@ -40,25 +59,8 @@ class MonthlyWeekday extends Schedule {
     }
   }
 
-  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth].
-  factory MonthlyWeekday({
-    required DateTime startDate,
-    required int frequency,
-    required int weekday,
-    required int weekOfMonth,
-    DateTime? endDate,
-  }) {
-    return MonthlyWeekday._internal(
-      startDate: startDate,
-      endDate: endDate,
-      frequency: frequency,
-      weekday: weekday,
-      weekOfMonth: weekOfMonth,
-      timingMode: const UnTimed(),
-    );
-  }
-
-  /// Creates a monthly weekday schedule that occurs on the given [weekday] and [weekOfMonth] at the given [clockTimes].
+  /// Creates a monthly weekday schedule that occurs on the given
+  /// [weekday] and [weekOfMonth] at the given [clockTimes].
   factory MonthlyWeekday.timed({
     required DateTime startDate,
     required int frequency,
@@ -89,7 +91,8 @@ class MonthlyWeekday extends Schedule {
 
   /// The week of month that this schedule occurs on.
   ///
-  /// This is a integer, where 1 = First week of month, 5 = Last week of month, -1 = Last week of month.
+  /// This is a integer, where 1 = First week of month, 5 = Last week of
+  /// month, -1 = Last week of month.
   final int weekOfMonth;
 
   @override
@@ -114,31 +117,17 @@ class MonthlyWeekday extends Schedule {
       return false;
     }
 
-    bool isBeyondEndDate(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
       final occurrence = _getOccurrence(currentMonth);
 
       if (occurrence case final occurrence?) {
-        if (isBeyondEndDate(occurrence)) {
+        if (_isBeyondEnd(occurrence)) {
           return;
         }
 
-        final isValidDate =
-            !isBeforeStartDates(occurrence) && !isExcluded(occurrence);
+        final isValidDate = !isBeforeStartDates(occurrence) &&
+            !_isExcluded(occurrence, exclude);
 
         if (isValidDate) {
           // Generate timed occurrences for this date
@@ -156,7 +145,6 @@ class MonthlyWeekday extends Schedule {
       currentMonth = DateTime(
         currentMonth.year,
         currentMonth.month + frequency,
-        1,
       );
     }
   }
@@ -183,34 +171,16 @@ class MonthlyWeekday extends Schedule {
       return false;
     }
 
-    bool isBeyondEndDates(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      if (date.isLaterDateThan(end)) {
-        return true;
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     while (true) {
       final occurrence = _getOccurrence(currentMonth);
 
       if (occurrence case final occurrence?) {
-        if (isBeyondEndDates(occurrence)) {
+        if (_isBeyondEnd(occurrence, end)) {
           return;
         }
 
-        final isValidDate =
-            !isBeforeStartDates(occurrence) && !isExcluded(occurrence);
+        final isValidDate = !isBeforeStartDates(occurrence) &&
+            !_isExcluded(occurrence, exclude);
 
         if (isValidDate) {
           // Generate timed occurrences for this date
@@ -223,7 +193,6 @@ class MonthlyWeekday extends Schedule {
       currentMonth = DateTime(
         currentMonth.year,
         currentMonth.month + frequency,
-        1,
       );
     }
   }

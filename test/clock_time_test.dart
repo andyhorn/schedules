@@ -42,27 +42,31 @@ void main() {
         test('throws ArgumentError for negative hour', () {
           expect(
             () => ClockTime(hour: -1, minute: 0),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Hour must be between 0 and 23'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Hour must be between 0 and 23'),
+              ),
+            ),
           );
         });
 
         test('throws ArgumentError for hour greater than 23', () {
           expect(
             () => ClockTime(hour: 24, minute: 0),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Hour must be between 0 and 23'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Hour must be between 0 and 23'),
+              ),
+            ),
           );
         });
 
         test('accepts valid hour values', () {
-          for (int hour = 0; hour <= 23; hour++) {
+          for (var hour = 0; hour <= 23; hour++) {
             expect(
               () => ClockTime(hour: hour, minute: 0),
               returnsNormally,
@@ -76,27 +80,31 @@ void main() {
         test('throws ArgumentError for negative minute', () {
           expect(
             () => ClockTime(hour: 12, minute: -1),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Minute must be between 0 and 59'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Minute must be between 0 and 59'),
+              ),
+            ),
           );
         });
 
         test('throws ArgumentError for minute greater than 59', () {
           expect(
             () => ClockTime(hour: 12, minute: 60),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Minute must be between 0 and 59'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Minute must be between 0 and 59'),
+              ),
+            ),
           );
         });
 
         test('accepts valid minute values', () {
-          for (int minute = 0; minute <= 59; minute++) {
+          for (var minute = 0; minute <= 59; minute++) {
             expect(
               () => ClockTime(hour: 12, minute: minute),
               returnsNormally,
@@ -110,27 +118,31 @@ void main() {
         test('throws ArgumentError for negative second', () {
           expect(
             () => ClockTime(hour: 12, minute: 30, second: -1),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Second must be between 0 and 59'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Second must be between 0 and 59'),
+              ),
+            ),
           );
         });
 
         test('throws ArgumentError for second greater than 59', () {
           expect(
             () => ClockTime(hour: 12, minute: 30, second: 60),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Second must be between 0 and 59'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Second must be between 0 and 59'),
+              ),
+            ),
           );
         });
 
         test('accepts valid second values', () {
-          for (int second = 0; second <= 59; second++) {
+          for (var second = 0; second <= 59; second++) {
             expect(
               () => ClockTime(hour: 12, minute: 30, second: second),
               returnsNormally,
@@ -144,11 +156,13 @@ void main() {
         test('throws ArgumentError for negative millisecond', () {
           expect(
             () => ClockTime(hour: 12, minute: 30, second: 45, millisecond: -1),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Millisecond must be between 0 and 999'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Millisecond must be between 0 and 999'),
+              ),
+            ),
           );
         });
 
@@ -156,19 +170,25 @@ void main() {
           expect(
             () =>
                 ClockTime(hour: 12, minute: 30, second: 45, millisecond: 1000),
-            throwsA(isA<ArgumentError>().having(
-              (e) => e.message,
-              'message',
-              contains('Millisecond must be between 0 and 999'),
-            )),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Millisecond must be between 0 and 999'),
+              ),
+            ),
           );
         });
 
         test('accepts valid millisecond values', () {
-          for (int millisecond = 0; millisecond <= 999; millisecond += 100) {
+          for (var millisecond = 0; millisecond <= 999; millisecond += 100) {
             expect(
               () => ClockTime(
-                  hour: 12, minute: 30, second: 45, millisecond: millisecond),
+                hour: 12,
+                minute: 30,
+                second: 45,
+                millisecond: millisecond,
+              ),
               returnsNormally,
               reason: 'Millisecond $millisecond should be valid',
             );
@@ -189,7 +209,7 @@ void main() {
       });
 
       test('creates ClockTime from DateTime with zero components', () {
-        final dateTime = DateTime(2023, 6, 15, 0, 0, 0, 0);
+        final dateTime = DateTime(2023, 6, 15);
         final clockTime = ClockTime.fromDateTime(dateTime);
 
         expect(clockTime.hour, equals(0));
@@ -209,7 +229,7 @@ void main() {
       });
 
       test('creates ClockTime from DateTime at midnight', () {
-        final dateTime = DateTime(2023, 6, 15, 0, 0, 0, 0);
+        final dateTime = DateTime(2023, 6, 15);
         final clockTime = ClockTime.fromDateTime(dateTime);
 
         expect(clockTime.hour, equals(0));
@@ -219,7 +239,7 @@ void main() {
       });
 
       test('creates ClockTime from DateTime at noon', () {
-        final dateTime = DateTime(2023, 6, 15, 12, 0, 0, 0);
+        final dateTime = DateTime(2023, 6, 15, 12);
         final clockTime = ClockTime.fromDateTime(dateTime);
 
         expect(clockTime.hour, equals(12));
@@ -312,8 +332,7 @@ void main() {
 
     group('edge cases', () {
       test('handles midnight correctly', () {
-        final clockTime =
-            ClockTime(hour: 0, minute: 0, second: 0, millisecond: 0);
+        final clockTime = ClockTime(hour: 0, minute: 0);
 
         expect(clockTime.hour, equals(0));
         expect(clockTime.minute, equals(0));
@@ -332,8 +351,7 @@ void main() {
       });
 
       test('handles noon correctly', () {
-        final clockTime =
-            ClockTime(hour: 12, minute: 0, second: 0, millisecond: 0);
+        final clockTime = ClockTime(hour: 12, minute: 0);
 
         expect(clockTime.hour, equals(12));
         expect(clockTime.minute, equals(0));
@@ -354,8 +372,7 @@ void main() {
 
     group('boundary values', () {
       test('accepts minimum valid values', () {
-        final clockTime =
-            ClockTime(hour: 0, minute: 0, second: 0, millisecond: 0);
+        final clockTime = ClockTime(hour: 0, minute: 0);
 
         expect(clockTime.hour, equals(0));
         expect(clockTime.minute, equals(0));
@@ -376,20 +393,27 @@ void main() {
       test('rejects values just below minimum', () {
         expect(() => ClockTime(hour: -1, minute: 0), throwsArgumentError);
         expect(() => ClockTime(hour: 0, minute: -1), throwsArgumentError);
-        expect(() => ClockTime(hour: 0, minute: 0, second: -1),
-            throwsArgumentError);
-        expect(() => ClockTime(hour: 0, minute: 0, second: 0, millisecond: -1),
-            throwsArgumentError);
+        expect(
+          () => ClockTime(hour: 0, minute: 0, second: -1),
+          throwsArgumentError,
+        );
+        expect(
+          () => ClockTime(hour: 0, minute: 0, millisecond: -1),
+          throwsArgumentError,
+        );
       });
 
       test('rejects values just above maximum', () {
         expect(() => ClockTime(hour: 24, minute: 0), throwsArgumentError);
         expect(() => ClockTime(hour: 0, minute: 60), throwsArgumentError);
-        expect(() => ClockTime(hour: 0, minute: 0, second: 60),
-            throwsArgumentError);
         expect(
-            () => ClockTime(hour: 0, minute: 0, second: 0, millisecond: 1000),
-            throwsArgumentError);
+          () => ClockTime(hour: 0, minute: 0, second: 60),
+          throwsArgumentError,
+        );
+        expect(
+          () => ClockTime(hour: 0, minute: 0, millisecond: 1000),
+          throwsArgumentError,
+        );
       });
     });
   });

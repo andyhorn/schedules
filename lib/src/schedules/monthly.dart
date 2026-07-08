@@ -8,13 +8,28 @@ part of 'schedule_base.dart';
 /// - any day in [days] is not between 1 and 31 (inclusive)
 /// - [endDate] is before [startDate]
 class Monthly extends Schedule {
+  /// Creates a monthly schedule that occurs every [frequency] months on
+  /// the given [days].
+  factory Monthly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> days,
+    DateTime? endDate,
+  }) {
+    return Monthly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      days: days,
+      endDate: endDate,
+    );
+  }
   Monthly._internal({
     required super.startDate,
-    required this.days,
+    required List<int> days,
     required this.frequency,
     super.endDate,
     super.timingMode,
-  }) {
+  }) : days = List.unmodifiable(days) {
     if (frequency < 1) {
       throw ArgumentError.value(
         frequency,
@@ -32,23 +47,8 @@ class Monthly extends Schedule {
     }
   }
 
-  /// Creates a monthly schedule that occurs every [frequency] months on the given [days].
-  factory Monthly({
-    required DateTime startDate,
-    required int frequency,
-    required List<int> days,
-    DateTime? endDate,
-  }) {
-    return Monthly._internal(
-      startDate: startDate,
-      frequency: frequency,
-      days: days,
-      endDate: endDate,
-      timingMode: const UnTimed(),
-    );
-  }
-
-  /// Creates a monthly schedule that occurs every [frequency] months on the given [days] at the given [clockTimes].
+  /// Creates a monthly schedule that occurs every [frequency] months on
+  /// the given [days] at the given [clockTimes].
   factory Monthly.timed({
     required DateTime startDate,
     required int frequency,
@@ -67,9 +67,11 @@ class Monthly extends Schedule {
 
   /// The days of the month that this schedule occurs on.
   ///
-  /// This is a list of integers, where each integer represents a day of the month.
+  /// This is a list of integers, where each integer represents a day of
+  /// the month.
   ///
-  /// For example, if this is `[1, 15]`, then this schedule occurs on the 1st and 15th of every month.
+  /// For example, if this is `[1, 15]`, then this schedule occurs on the
+  /// 1st and 15th of every month.
   final List<int> days;
 
   /// The frequency at which this schedule occurs.
@@ -96,20 +98,6 @@ class Monthly extends Schedule {
     final sortedDays = days.toList()..sort();
     final firstValidDay = _getFirstValidDate(_clampToBounds(from));
 
-    bool isBeyondEndDate(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     var currentMonth = firstValidDay.startOfMonth();
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
@@ -129,11 +117,11 @@ class Monthly extends Schedule {
           continue;
         }
 
-        if (isBeyondEndDate(date)) {
+        if (_isBeyondEnd(date)) {
           return;
         }
 
-        if (isExcluded(date)) {
+        if (_isExcluded(date, exclude)) {
           continue;
         }
 
@@ -164,26 +152,8 @@ class Monthly extends Schedule {
 
     var currentMonth = firstValidDay.startOfMonth();
 
-    bool isBeyondEndDates(DateTime date) {
-      if (date.isLaterDateThan(end)) {
-        return true;
-      }
-
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
     bool isBeforeFirstValidDate(DateTime date) {
       return date.isEarlierDateThan(firstValidDay);
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
     }
 
     while (true) {
@@ -198,7 +168,7 @@ class Monthly extends Schedule {
 
         final date = currentMonth.withDay(day);
 
-        if (isBeyondEndDates(date)) {
+        if (_isBeyondEnd(date, end)) {
           return;
         }
 
@@ -206,7 +176,7 @@ class Monthly extends Schedule {
           continue;
         }
 
-        if (isExcluded(date)) {
+        if (_isExcluded(date, exclude)) {
           continue;
         }
 
@@ -221,29 +191,30 @@ class Monthly extends Schedule {
   }
 
   DateTime _getFirstValidDate(DateTime from) {
-    from = _clampToBounds(from);
+    var date = _clampToBounds(from);
 
-    final monthsApart = startDate.monthsApartFrom(from).abs();
+    final monthsApart = startDate.monthsApartFrom(date).abs();
     final offset = monthsApart % frequency;
 
     if (offset != 0) {
-      from = DateTime(from.year, from.month + (frequency - offset), 1);
+      date = DateTime(date.year, date.month + (frequency - offset));
     }
 
     final sortedDays = days.toList()..sort();
-    final index = sortedDays.indexWhere((day) => day >= from.day);
+    final index = sortedDays.indexWhere((day) => day >= date.day);
 
     if (index != -1) {
-      from = DateTime(from.year, from.month, sortedDays[index]);
+      date = DateTime(date.year, date.month, sortedDays[index]);
     } else {
-      // Find the first valid day in the next valid month according to the frequency
-      // and the first sorted day. For example, if the frequency is 1 and the first sorted day is
-      // 31, then find the next month with 31 days.
+      // Find the first valid day in the next valid month according to the
+      // frequency and the first sorted day. For example, if the frequency is
+      // 1 and the first sorted day is 31, then find the next month with 31
+      // days.
       do {
-        from = DateTime(from.year, from.month + frequency, sortedDays.first);
-      } while (from.day != sortedDays.first);
+        date = DateTime(date.year, date.month + frequency, sortedDays.first);
+      } while (date.day != sortedDays.first);
     }
 
-    return from;
+    return date;
   }
 }

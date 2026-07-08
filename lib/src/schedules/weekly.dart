@@ -8,13 +8,28 @@ part of 'schedule_base.dart';
 /// - any weekday in [weekdays] is not between 1 and 7 (inclusive)
 /// - [endDate] is before [startDate]
 class Weekly extends Schedule {
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the
+  /// given [weekdays].
+  factory Weekly({
+    required DateTime startDate,
+    required int frequency,
+    required List<int> weekdays,
+    DateTime? endDate,
+  }) {
+    return Weekly._internal(
+      startDate: startDate,
+      frequency: frequency,
+      weekdays: weekdays,
+      endDate: endDate,
+    );
+  }
   Weekly._internal({
     required super.startDate,
     required this.frequency,
-    required this.weekdays,
+    required List<int> weekdays,
     super.endDate,
     super.timingMode,
-  }) {
+  }) : weekdays = List.unmodifiable(weekdays) {
     if (frequency < 1) {
       throw ArgumentError.value(
         frequency,
@@ -40,22 +55,8 @@ class Weekly extends Schedule {
     }
   }
 
-  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays].
-  factory Weekly({
-    required DateTime startDate,
-    required int frequency,
-    required List<int> weekdays,
-    DateTime? endDate,
-  }) {
-    return Weekly._internal(
-      startDate: startDate,
-      frequency: frequency,
-      weekdays: weekdays,
-      endDate: endDate,
-    );
-  }
-
-  /// Creates a weekly schedule that occurs every [frequency] weeks on the given [weekdays] at the given [clockTimes].
+  /// Creates a weekly schedule that occurs every [frequency] weeks on the
+  /// given [weekdays] at the given [clockTimes].
   factory Weekly.timed({
     required DateTime startDate,
     required int frequency,
@@ -81,7 +82,8 @@ class Weekly extends Schedule {
   ///
   /// This is a list of integers, where each integer represents a weekday.
   ///
-  /// For example, if this is `[DateTime.monday, DateTime.wednesday]`, then this schedule occurs on Mondays and Wednesdays.
+  /// For example, if this is `[DateTime.monday, DateTime.wednesday]`,
+  /// then this schedule occurs on Mondays and Wednesdays.
   final List<int> weekdays;
 
   @override
@@ -108,30 +110,16 @@ class Weekly extends Schedule {
 
     final firstValidDay = _getFirstValidDay(currentWeek, sortedWeekdays);
 
-    bool isBeyondEndDate(DateTime date) {
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
     bool isBeforeFirstValidDay(DateTime date) {
       return date.isEarlierDateThan(firstValidDay);
     }
 
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
-    }
-
     var occurrencesFound = 0;
     while (occurrencesFound < n) {
-      for (final weekday in weekdays) {
+      for (final weekday in sortedWeekdays) {
         final date = currentWeek.withWeekday(weekday);
 
-        if (isBeyondEndDate(date)) {
+        if (_isBeyondEnd(date)) {
           return;
         }
 
@@ -139,7 +127,7 @@ class Weekly extends Schedule {
           continue;
         }
 
-        if (isExcluded(date)) {
+        if (_isExcluded(date, exclude)) {
           continue;
         }
 
@@ -171,33 +159,15 @@ class Weekly extends Schedule {
 
     final firstValidDay = _getFirstValidDay(currentWeek, sortedWeekdays);
 
-    bool isBeyondEndDates(DateTime date) {
-      if (date.isLaterDateThan(end)) {
-        return true;
-      }
-
-      if (endDate case final endDate?) {
-        if (date.isLaterDateThan(endDate)) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
     bool isBeforeFirstValidDate(DateTime date) {
       return date.isEarlierDateThan(firstValidDay);
-    }
-
-    bool isExcluded(DateTime date) {
-      return exclude?.any(date.isSameDateAs) ?? false;
     }
 
     while (true) {
       for (final weekday in sortedWeekdays) {
         final date = currentWeek.withWeekday(weekday);
 
-        if (isBeyondEndDates(date)) {
+        if (_isBeyondEnd(date, end)) {
           return;
         }
 
@@ -205,7 +175,7 @@ class Weekly extends Schedule {
           continue;
         }
 
-        if (isExcluded(date)) {
+        if (_isExcluded(date, exclude)) {
           continue;
         }
 
@@ -226,7 +196,7 @@ class Weekly extends Schedule {
 
     if (offsetWeeks != 0) {
       final duration = (totalWeeks + (frequency - offsetWeeks)) * 7;
-      from = startDate.add(Duration(days: duration));
+      return startDate.add(Duration(days: duration));
     }
 
     return from;
